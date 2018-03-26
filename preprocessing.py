@@ -1,5 +1,22 @@
 import librosa
 import numpy as np
+import pandas as pd
+
+
+def generate_batch(df, frame_length, hop_length):
+
+    dataX = []
+    dataY = []
+
+    #for i in range(0, df):
+    path = df.iloc[0]['wav_filename']
+    y_txt = df.iloc[0]['transcript']
+    x = mfcc(path, frame_length, hop_length)
+    print 'y: ', y_txt
+    print 'x: ', x
+    # dataX: append x to dataX and pad
+    # dataY: y_txt to integer and then to correct shape
+    return dataX, dataY
 
 
 
