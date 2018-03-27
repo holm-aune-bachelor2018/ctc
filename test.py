@@ -5,19 +5,20 @@ import pandas as pd
 import data
 
 #Preprocessing
-path = "data/LibriSpeech/dev-clean-wav/84-121123-0000.wav"
+path = "sample_data/wav_sample/sample_librivox-dev-clean.csv"
+#path = "sample_data/wav_sample/sample_librivox-dev-clean.csv"
 frequency = 16
 frame_length = 20*frequency
 hop_length = 10*frequency
 
 
-dataprop, df_final = data.combine_all_wavs_and_trans_from_csvs('data/librivox-dev-clean.csv')
+dataprop, df_final = data.combine_all_wavs_and_trans_from_csvs(path)
 
 print preprocessing.generate_batch(df_final, frame_length, hop_length)
 
 
 
-#df_final.to_csv('data.csv', index=False)
+df_final.to_csv('data.csv', index=False)
 
 
 #Model
