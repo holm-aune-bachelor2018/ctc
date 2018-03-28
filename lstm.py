@@ -13,13 +13,13 @@ metrics = ['accuracy']
 
 
 def simpleLSTM(units, input_shape, X, y):
-    '''
+    """
     :param units:
     :param input_shape: (batch_size(number of seq), time_steps(sequence length), input_dim(mfcc_features))
     :param X:
     :param Y:
     :return:
-    '''
+    """
 
     # Model compiling and fit
     model = Sequential()

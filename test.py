@@ -15,17 +15,13 @@ dataprop, df_final = data.combine_all_wavs_and_trans_from_csvs(path)
 
 preprocessing.generate_batch(df_final, frame_length, hop_length)
 
+df_final.to_csv('data.csv')
 
 
-df_final.to_csv('data.csv', index=False)
-
-
-#Model
+# Model
 units = 512                         #numb of hidden nodes
 mfcc_features = 12                  #input_dim
 input_shape=(None, mfcc_features)   #None to be able to process batches of any size
 
-
-
-#lstm.simpleLSTM(units, input_shape=input_shape, X=dataX, Y=dataY)
+# lstm.simpleLSTM(units, input_shape=input_shape, X=dataX, Y=dataY)
 

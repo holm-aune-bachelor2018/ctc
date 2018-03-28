@@ -112,6 +112,9 @@ def combine_all_wavs_and_trans_from_csvs(csvslist, sortagrad=True, createwordlis
     del df_all
     del listcomb
 
+    #Added index reset
+    #df_final = df_final.reset_index(drop=True)
+
     return dataproperties, df_final
 
 
