@@ -3,7 +3,7 @@
 import fnmatch
 import os
 import pandas as pd
-from char_map import char_map
+from char_map import char_map, index_map
 #from utils import text_to_int_sequence
 
 
@@ -162,5 +162,17 @@ def text_to_int_sequence(text):
         int_sequence.append(ch)
     return int_sequence
 
-
-
+def int_to_text_sequence(seq):
+    ''' Use a index map and convert int to a text sequence
+    #>>> from data import int_to_text_sequence
+    #>>> a = [2,22,10,11,21,2,13,11,6,1,21,2,8,20,17]
+    #>>> b = int_to_text_sequence(a)
+    '''
+    text_sequence = []
+    for c in seq:
+        if c == 28: #ctc/pad char
+            ch = ''
+        else:
+            ch = index_map[c]
+        text_sequence.append(ch)
+    return text_sequence
