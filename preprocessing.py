@@ -12,8 +12,8 @@ def generate_batch(df, frame_length, hop_length):
     :param df: Dataframes contaning (wav_filename, wav_filesize, transcript)
     :param frame_length: Length of each frame generated.
     :param hop_length: How far to jump for each frame.
-    :return: dataX:
-             dataY:
+    :return: dataX: (batch_size * max_timesteps * mfcc_features) dim matrix,
+             dataY: (batch_size * max_transcript_length) dim matrix
     """
 
     # Fetch lagrest wav_file to find the longest sequence length in batch
@@ -23,13 +23,11 @@ def generate_batch(df, frame_length, hop_length):
     max_length = get_seq_size(path_to_largest, frame_length, hop_length)
     # print "Length (in frames) of largest wav_file: ", max_length
 
-    # TODO: How to add each seq x to dataX? 3 dim? currently 2 dim.
-    dataX = np.empty([0, 12])
+    dataX = np.empty([0, max_length, 12])
     listY = []
 
     # for i in range(0, 3):
     for i in range(0, df.shape[0]):
-        # index reset??? iloc = integer position based locating, not index-based -> not needed?
 
         # dataY: y_txt from string to integer
         y_txt = df.iloc[i]['transcript']
@@ -39,14 +37,23 @@ def generate_batch(df, frame_length, hop_length):
         # dataX: extract mfcc features and pad so every frame-sequence is equal length
         path = df.iloc[i]['wav_filename']
         x = mfcc(path, frame_length, hop_length, max_length)
-        dataX = np.append(dataX, x, axis=0)
+
+        dataX = np.insert(dataX, i, x, axis=0)
+
+    y_length = len(max(listY, key=len))
+    print 'Y-length: ',y_length
+
+    dataY = np.empty([0, y_length])
+    for i in range(0, df.shape[0]):
+        y = listY[i]
+        for j in range(len(y), y_length):
+            y.append(0)
+
+        dataY = np.insert(dataY, i, y, axis=0)
+
 
     print "DataX shape: ", dataX.shape
     # plot_mfcc(dataX.T)
-
-    # TODO: must pad elements in listY to same length then convert to ndarray
-    # currently just a ndarray of lists
-    dataY = np.array(listY)
 
     print "dataY: \n", dataY
 
