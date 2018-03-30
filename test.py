@@ -1,5 +1,5 @@
 import preprocessing
-import model
+import nn_models
 import numpy as np
 import pandas as pd
 import data
@@ -24,5 +24,5 @@ mfcc_features = 12                  #input_dim
 input_shape=(None, mfcc_features)   #None to be able to process batches of any size
 
 
-model.dnn_brnn(units,input_shape=input_shape)
+nn_models.dnn_brnn(units)
 # lstm.simpleLSTM(units, input_shape=input_shape, X=dataX, Y=dataY)

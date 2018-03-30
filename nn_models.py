@@ -1,17 +1,9 @@
-import numpy as np
 from keras.models import Model
 from keras.layers import Dense, SimpleRNN, Bidirectional, Masking, TimeDistributed, Lambda, Input
 import tensorflow as tf
 
-np.random.seed(7)
-loss = 'categorical_crossentropy'
-optimizer = 'adam'
-metrics = ['accuracy']
-
-input_dim = 12
-
 # From Baidu Deep speech 1
-def dnn_brnn(units, input_dim):
+def dnn_brnn(units, input_dim=12, output_dim=28):
     """
     :param units: units
     :param input_dim: input_dim(mfcc_features)
@@ -47,27 +39,19 @@ def dnn_brnn(units, input_dim):
 
     # 1 fully connected relu layer + softmax
     x = TimeDistributed(Dense(units=units, name='fc4',activation='relu'))(x)
-    y_pred = TimeDistributed(Dense(units=units, name='fc5',activation='softmax'))(x)
+
+    # outout layer
+    y_pred = TimeDistributed(Dense(units=output_dim, name='softmax',activation='softmax'))(x)
 
     ###### CTC ####
 
     # Lambda layer with ctc_loss function due to Keras not supporting CTC layers
-    output = Lambda(ctc_loss, output_shape=(1,))([y_true, y_pred, input_length, label_length])
+    output = Lambda(ctc_loss, name='ctc', output_shape=(1,))([y_true, y_pred, input_length, label_length])
 
     model = Model(inputs=[x_data, y_true, input_length, label_length], outputs=output)
 
-    model.summary() #prints summary
+    # model.summary() #prints summary
     return model
-
-'''
-    model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
-
-    model.fit(X,y, epochs=100, batch_size=1, verbose=0)
-
-    #Results
-    scores = model.evaluate(X, y, verbose=0)
-    return scores
-'''
 
 # Calculates ctc loss via TensorFlow ctc_batch_cost
 def ctc_loss(args):
