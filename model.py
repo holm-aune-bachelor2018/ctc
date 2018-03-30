@@ -19,10 +19,10 @@ def dnn_brnn(units, input_dim):
     """
     # Model contains:
     # 1 layer of masking
-    # 1 layer of batch normalization? Not yet implemented
-    # 3 layers of DNN ReLu
+    # 1 layer of batch normalization  ** Not yet implemented **
+    # 3 layers of fully connected ReLu (DNN)
     # 1 layer of BRNN
-    # 1 layer of DNN ReLu
+    # 1 layer of ReLu
     # 1 layer of softmax
 
     # TODO: implement clipped ReLu? Dropout?
@@ -35,7 +35,7 @@ def dnn_brnn(units, input_dim):
     # Masking layer
     x = Masking(mask_value=0.)(x_data)
 
-    #TODO: batch norm layer?
+    #TODO: batch norm layer
 
     # 3 fully connected layers DNN ReLu
     x = TimeDistributed(Dense(units=units, name='fc1', activation='relu'))(x)
@@ -43,11 +43,11 @@ def dnn_brnn(units, input_dim):
     x = TimeDistributed(Dense(units=units, name='fc3', activation='relu'))(x)
 
     # Bidirectional RNN (with ReLu ?)
-    x = Bidirectional(SimpleRNN(units, activation='relu', return_sequences=True))(x)
+    x = Bidirectional(SimpleRNN(units, name='bi_rnn1',activation='relu', return_sequences=True))(x)
 
     # 1 fully connected relu layer + softmax
-    x = TimeDistributed(Dense(units=units, activation='relu'))(x)
-    y_pred = TimeDistributed(Dense(units=units, activation='softmax'))(x)
+    x = TimeDistributed(Dense(units=units, name='fc4',activation='relu'))(x)
+    y_pred = TimeDistributed(Dense(units=units, name='fc5',activation='softmax'))(x)
 
     ###### CTC ####
 
@@ -76,5 +76,4 @@ def ctc_loss(args):
     input_length = args[2]
     label_length = args[3]
 
-    res = tf.keras.backend.ctc_batch_cost(y_true, y_pred, input_length, label_length)
-    return res
+    return tf.keras.backend.ctc_batch_cost(y_true, y_pred, input_length, label_length)
