@@ -1,5 +1,5 @@
 import preprocessing
-#import lstm
+import model
 import numpy as np
 import pandas as pd
 import data
@@ -23,5 +23,6 @@ units = 512                         #numb of hidden nodes
 mfcc_features = 12                  #input_dim
 input_shape=(None, mfcc_features)   #None to be able to process batches of any size
 
-# lstm.simpleLSTM(units, input_shape=input_shape, X=dataX, Y=dataY)
 
+model.dnn_brnn(units,input_shape=input_shape)
+# lstm.simpleLSTM(units, input_shape=input_shape, X=dataX, Y=dataY)

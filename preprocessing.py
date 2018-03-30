@@ -41,7 +41,7 @@ def generate_batch(df, frame_length, hop_length):
         dataX = np.insert(dataX, i, x, axis=0)
 
     y_length = len(max(listY, key=len))
-    print 'Y-length: ',y_length
+    #print 'Y-length: ',y_length
 
     dataY = np.empty([0, y_length])
     for i in range(0, df.shape[0]):
@@ -52,10 +52,10 @@ def generate_batch(df, frame_length, hop_length):
         dataY = np.insert(dataY, i, y, axis=0)
 
 
-    print "DataX shape: ", dataX.shape
+    #print "DataX shape: ", dataX.shape
     # plot_mfcc(dataX.T)
 
-    print "dataY: \n", dataY
+    #print "dataY: \n", dataY
 
     return dataX, dataY
 
