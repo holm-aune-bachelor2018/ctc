@@ -1,8 +1,9 @@
 from keras.models import Model
 from keras.layers import Dense, SimpleRNN, Bidirectional, Masking, TimeDistributed, Lambda, Input
-import tensorflow as tf
+from keras import backend as K
 
-# From Baidu Deep speech 1
+
+# Architecture from Baidu Deep speech 1
 def dnn_brnn(units, input_dim=12, output_dim=29):
     """
     :param units: units
@@ -27,21 +28,22 @@ def dnn_brnn(units, input_dim=12, output_dim=29):
     # Masking layer
     x = Masking(mask_value=0.)(x_data)
 
-    #TODO: batch norm layer
+    #TODO: batch norm layer or dropout ?
 
     # 3 fully connected layers DNN ReLu
-    x = TimeDistributed(Dense(units=units, name='fc1', activation='relu'))(x)
-    x = TimeDistributed(Dense(units=units, name='fc2', activation='relu'))(x)
-    x = TimeDistributed(Dense(units=units, name='fc3', activation='relu'))(x)
+
+    x = TimeDistributed(Dense(units=units, name='fc1', activation=clipped_relu))(x)
+    x = TimeDistributed(Dense(units=units, name='fc2', activation=clipped_relu))(x)
+    x = TimeDistributed(Dense(units=units, name='fc3', activation=clipped_relu))(x)
 
     # Bidirectional RNN (with ReLu ?)
-    x = Bidirectional(SimpleRNN(units, name='bi_rnn1',activation='relu', return_sequences=True))(x)
+    x = Bidirectional(SimpleRNN(units, name='bi_rnn1', activation='relu', return_sequences=True))(x)
 
     # 1 fully connected relu layer + softmax
-    x = TimeDistributed(Dense(units=units, name='fc4',activation='relu'))(x)
+    x = TimeDistributed(Dense(units=units, name='fc4', activation='relu'))(x)
 
     # outout layer
-    y_pred = TimeDistributed(Dense(units=output_dim, name='softmax',activation='softmax'))(x)
+    y_pred = TimeDistributed(Dense(units=output_dim, name='softmax', activation='softmax'))(x)
 
 
     ###### CTC ####
@@ -61,4 +63,8 @@ def ctc_loss(args):
     input_length = args[2]
     label_length = args[3]
 
-    return tf.keras.backend.ctc_batch_cost(y_true, y_pred, input_length, label_length)
+    return K.ctc_batch_cost(y_true, y_pred, input_length, label_length)
+
+# Returns clipped relu, clip value set to 20 (value from Baidu Deep speech 1)
+def clipped_relu(value):
+    return K.relu(value, max_value=20)
