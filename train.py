@@ -2,7 +2,7 @@ from keras.models import Model
 import nn_models
 import preprocessing
 import numpy as np
-from keras import Input
+from keras import optimizers
 import pandas as pd
 import data
 
@@ -13,10 +13,9 @@ frame_length = 20*frequency
 hop_length = 10*frequency
 
 dataprop, df_final = data.combine_all_wavs_and_trans_from_csvs(path)
-dataX, dataY = preprocessing.generate_batch(df_final, frame_length, hop_length)
+dataX, dataY, x_length, y_length = preprocessing.generate_batch(df_final, frame_length, hop_length)
 
-print 'dataY: \n', dataY.shape
-#df_final.to_csv('data.csv')
+df_final.to_csv('data.csv')
 
 
 # Model
@@ -26,19 +25,16 @@ mfcc_features = 12                  #input_dim
 input_shape=(None, mfcc_features)   #None to be able to process batches of any size
 
 np.random.seed(7)
-#loss = 'categorical_crossentropy'
-optimizer = 'adam'
+loss = {'ctc': lambda y_true, y_pred: y_pred}
+optimizer = optimizers.Adam(clipvalue=0.5)
 metrics = ['accuracy']
 
 n_batch = len(dataX)
 n_epoch = 1
 
 
-# lstm.simpleLSTM(units, input_shape=input_shape, X=dataX, Y=dataY)
-
-
-brnn_model = nn_models.dnn_brnn(units)
-brnn_model.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer=optimizer, metrics=metrics)
+brnn_model = nn_models.dnn_brnn(units,)
+brnn_model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 brnn_model.summary()
 
 #dataX
@@ -47,25 +43,33 @@ brnn_model.summary()
 # input_length - (samples, 1) containing the sequence length for each batch item in y_pred = ???
 # label_length - (samples, 1) containing the sequence length for each batch item in y_true = 132
 
-# numpy array? with correct shapes
-# input_to_model = [tensor(), tensor(), tensor(), tensor()]
+# CTC requirement: label_length must be shorter than the input_length
 
-# input_to_model = [Input(name='x_data', tensor=(dataX)),
-#    Input(name='y_true', shape=[None]),
-#    Input(name='y_pred_len', shape=[1]),
-#    Input(name='y_true_len', shape=[1])]
 
+x_data = dataX                        # batch_size * time_steps * features
+y_true = dataY                        # batch_size * max_string_length
+input_length = np.array(x_length)     # batch_size * 1
+label_length = np.array(y_length)     # batch_size * 1
+
+
+
+
+print "\Before fitting: "
+print "x_data shape: ", x_data.shape
+print "y_data shape: ", y_true.shape
+print "input_length shape: ", input_length.shape
+print "label_length shape: ", label_length.shape, "\n"
+
+
+#print "x_data: \n", x_data
+#print "y_true: \n", y_true
+#print "label length: \n", label_length
+#print "input length: \n", input_length
+
+#y_true, y_pred, input_length, label_length
 for i in range(n_epoch):
-    brnn_model.fit(dataX, dataY, epochs=n_epoch, batch_size=n_batch, verbose=0)
+    brnn_model.fit([x_data, y_true, input_length, label_length], dataY, epochs=n_epoch, batch_size=n_batch, verbose=2)
     brnn_model.reset_states()
-
-
-
-#model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
-
-#models.fit(X, y, epochs=100, batch_size=1, verbose=0)
-
-
 
 #Results
 #scores = nn_models.evaluate(X, y, verbose=0)

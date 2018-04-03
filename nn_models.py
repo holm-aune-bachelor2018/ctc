@@ -3,7 +3,7 @@ from keras.layers import Dense, SimpleRNN, Bidirectional, Masking, TimeDistribut
 import tensorflow as tf
 
 # From Baidu Deep speech 1
-def dnn_brnn(units, input_dim=12, output_dim=28):
+def dnn_brnn(units, input_dim=12, output_dim=29):
     """
     :param units: units
     :param input_dim: input_dim(mfcc_features)
@@ -21,8 +21,8 @@ def dnn_brnn(units, input_dim=12, output_dim=28):
 
     x_data = Input(name='x_data',shape=(None, input_dim))
     y_true = Input(name='y_true', shape=[None])
-    input_length = Input(name='y_pred_len', shape=[1])
-    label_length = Input(name='y_true_len', shape=[1])
+    input_length = Input(name='y_pred_len', shape=[1,])
+    label_length = Input(name='y_true_len', shape=[1,])
 
     # Masking layer
     x = Masking(mask_value=0.)(x_data)
@@ -43,6 +43,7 @@ def dnn_brnn(units, input_dim=12, output_dim=28):
     # outout layer
     y_pred = TimeDistributed(Dense(units=output_dim, name='softmax',activation='softmax'))(x)
 
+
     ###### CTC ####
 
     # Lambda layer with ctc_loss function due to Keras not supporting CTC layers
@@ -50,7 +51,7 @@ def dnn_brnn(units, input_dim=12, output_dim=28):
 
     model = Model(inputs=[x_data, y_true, input_length, label_length], outputs=output)
 
-    # model.summary() #prints summary
+    #model.summary() #prints summary
     return model
 
 # Calculates ctc loss via TensorFlow ctc_batch_cost
