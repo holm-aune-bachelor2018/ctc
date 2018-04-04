@@ -1,24 +1,22 @@
 from keras.models import Model
-from keras.layers import Dense, SimpleRNN, Bidirectional, Masking, TimeDistributed, Lambda, Input
+from keras.layers import Dense, SimpleRNN, Bidirectional, Masking, TimeDistributed, Lambda, Input, Dropout
 from keras import backend as K
 
 
 # Architecture from Baidu Deep speech 1
 def dnn_brnn(units, input_dim=12, output_dim=29):
-    """
+    '''
     :param units: units
     :param input_dim: input_dim(mfcc_features)
     :return: dnn_brnn model
-    """
-    # Model contains:
-    # 1 layer of masking
-    # 1 layer of batch normalization  ** Not yet implemented **
-    # 3 layers of fully connected ReLu (DNN)
-    # 1 layer of BRNN
-    # 1 layer of ReLu
-    # 1 layer of softmax
 
-    # TODO: implement clipped ReLu? Dropout?
+    Model contains:
+     1 layer of masking
+     3 layers of fully connected clipped ReLu (DNN) with dropout 10 % between each layer
+     1 layer of BRNN
+     1 layer of ReLu
+     1 layer of softmax
+    '''
 
     x_data = Input(name='x_data',shape=(None, input_dim))
     y_true = Input(name='y_true', shape=[None])
@@ -28,12 +26,16 @@ def dnn_brnn(units, input_dim=12, output_dim=29):
     # Masking layer
     x = Masking(mask_value=0.)(x_data)
 
-    #TODO: batch norm layer or dropout ?
-
     # 3 fully connected layers DNN ReLu
+    # Dropout rate 10 % at each FC layer
 
+    x = Dropout(0.1)(x)
     x = TimeDistributed(Dense(units=units, name='fc1', activation=clipped_relu))(x)
+
+    x = Dropout(0.1)(x)
     x = TimeDistributed(Dense(units=units, name='fc2', activation=clipped_relu))(x)
+
+    x = Dropout(0.1)(x)
     x = TimeDistributed(Dense(units=units, name='fc3', activation=clipped_relu))(x)
 
     # Bidirectional RNN (with ReLu ?)

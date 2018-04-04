@@ -3,34 +3,36 @@ import preprocessing
 import numpy as np
 from keras import optimizers
 import data
+from keras import backend as K
 
 # Preprocessing
 path = "sample_data/wav_sample/sample_librivox-dev-clean.csv"
 frequency = 16
-frame_length = 20*frequency
-hop_length = 10*frequency
-
-dataprop, df_final = data.combine_all_wavs_and_trans_from_csvs(path)
-dataX, dataY, x_length, y_length = preprocessing.generate_batch(df_final, frame_length, hop_length)
+frame_length = 20 * frequency
+hop_length = 10 * frequency
+mfcc_features = 12                  # input_dim
 
 # df_final.to_csv('data.csv')
-
+dataprop, df_final = data.combine_all_wavs_and_trans_from_csvs(path)
+dataX, dataY, x_length, y_length = preprocessing.generate_batch(df_final, frame_length, hop_length, index=0, batch_size=10, mfcc_features=12)
 
 # Model
-units = 512                         # numb of hidden nodes
-mfcc_features = 12                  # input_dim
-input_shape=(None, mfcc_features)   # "None" to be able to process batches of any size
+units = 512                           # numb of hidden nodes
+input_shape = (None, mfcc_features)   # "None" to be able to process batches of any size
+output_dim = 29                       # output dimension (n-1)
 
 np.random.seed(7)
 loss = {'ctc': lambda y_true, y_pred: y_pred}
-optimizer = optimizers.Adam(clipvalue=0.5)
+
+eps = 1e-8                            # epsilon 1e-8
+learning_rate = 0.001
+optimizer = optimizers.Adam(lr=learning_rate, epsilon=eps, clipnorm=5.0)
 metrics = ['accuracy']
 
 n_batch = len(dataX)
 n_epoch = 1
 
-
-brnn_model = nn_models.dnn_brnn(units)
+brnn_model = nn_models.dnn_brnn(units, mfcc_features, output_dim)
 brnn_model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 brnn_model.summary()
 

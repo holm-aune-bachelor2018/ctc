@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 import data
 from keras.preprocessing.sequence import pad_sequences
 
-
-def generate_batch(df, frame_length, hop_length, mfcc_features=12):
+def generate_batch(df, frame_length, hop_length, index, batch_size, mfcc_features=12):
     """
     Generates a batch of correctly shaped X and Y data from given dataframe
     :param df: Dataframes contaning (wav_filename, wav_filesize, transcript)
@@ -36,7 +35,7 @@ def generate_batch(df, frame_length, hop_length, mfcc_features=12):
     len_x_seq = []
     len_y_seq = []
 
-    for i in range(0, df.shape[0]):
+    for i in range(index, index + batch_size):
         # y_data: y_txt from string to integer
         y_txt = df.iloc[i]['transcript']
         y_int = data.text_to_int_sequence(y_txt)
@@ -57,7 +56,7 @@ def generate_batch(df, frame_length, hop_length, mfcc_features=12):
     # print 'Y-length: ', y_length
 
     # Pads every sequence in y to be equal length
-    for i in range(0, df.shape[0]):
+    for i in range(0, len(y_data_unpadded)):
         y = y_data_unpadded[i]
 
         for j in range(len(y), y_length):
