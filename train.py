@@ -33,6 +33,8 @@ units = 512                                         # numb of hidden nodes
 input_shape = (None, params.get('mfcc_features'))   # "None" to be able to process batches of any size
 output_dim = 29                                     # output dimension (n-1)
 
+epochs = 5
+
 loss = {'ctc': lambda y_true, y_pred: y_pred}
 
 eps = 1e-8  # epsilon 1e-8
@@ -47,8 +49,8 @@ brnn_model.summary()
 
 # Train model on dataset
 brnn_model.fit_generator(generator=training_generator,
-                         validation_data=validation_generator,
-                         epochs=1,
+#                         validation_data=validation_generator,
+                         epochs=epochs,
                          verbose=2)
 #Results
 #scores = nn_models.evaluate(X, y, verbose=0)

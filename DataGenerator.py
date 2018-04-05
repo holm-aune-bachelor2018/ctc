@@ -20,6 +20,7 @@ class DataGenerator(keras.utils.Sequence):
         self.mfcc_features = mfcc_features
         self.shuffle = shuffle
         self.on_epoch_end()
+        print "Init finish"
 
     def __len__(self):
         'Denotes the number of batches per epoch'
@@ -54,11 +55,8 @@ class DataGenerator(keras.utils.Sequence):
         path_to_largest = self.df.loc[largest_index]['wav_filename']
         max_length = self.get_seq_size(path_to_largest)
 
-        # print 'Largest ind: ', largest_index
-        # print "path to largest: ", path_to_largest
-        # print "Length (in frames) of largest wav_file: ", max_length
-
         # print "df inni: ", self.df
+        print "Indexes: ", indexes
 
         # Initializing vectors
         x_data = np.empty([0, max_length, self.mfcc_features])
@@ -128,6 +126,7 @@ class DataGenerator(keras.utils.Sequence):
         self.indexes = np.arange(len(self.df))
         # if self.shuffle == True:
         #    np.random.shuffle(self.indexes)
+
 
     def mfcc(self, file_path, max_pad_length):
         # TODO: Normalize input (between 0 and 1? -1 and 1?)
