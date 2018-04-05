@@ -20,8 +20,8 @@ def dnn_brnn(units, input_dim=12, output_dim=29):
 
     x_data = Input(name='x_data',shape=(None, input_dim))
     y_true = Input(name='y_true', shape=[None])
-    input_length = Input(name='y_pred_len', shape=[1,])
-    label_length = Input(name='y_true_len', shape=[1,])
+    input_length = Input(name='input_length', shape=[1,])
+    label_length = Input(name='label_length', shape=[1,])
 
     # Masking layer
     x = Masking(mask_value=0.)(x_data)
