@@ -20,7 +20,6 @@ class DataGenerator(keras.utils.Sequence):
         self.mfcc_features = mfcc_features
         self.shuffle = shuffle
         self.on_epoch_end()
-        print "Init finish"
 
     def __len__(self):
         'Denotes the number of batches per epoch'

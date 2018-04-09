@@ -21,7 +21,7 @@ print dataprop, "\n"
 params = {'batch_size': 5,
           'frame_length': 20*frequency,
           'hop_length': 10*frequency,
-          'mfcc_features': 12,
+          'mfcc_features': 26,
           'shuffle': False}
 
 # Generators
