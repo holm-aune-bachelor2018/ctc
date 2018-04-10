@@ -77,13 +77,6 @@ def ctc_lambda_func(args):
 
 
 """
-keras doc: 
-    y_true,
-    y_pred,
-    input_length,
-    label_length
-
-
 # Calculates ctc loss via TensorFlow ctc_batch_cost
 def ctc_loss(args):
     y_true = args[0]
@@ -93,7 +86,6 @@ def ctc_loss(args):
 
     return K.ctc_batch_cost(y_true, y_pred, input_length, label_length)
 """
-
 
 # Returns clipped relu, clip value set to 20 (value from Baidu Deep speech 1)
 def clipped_relu(value):

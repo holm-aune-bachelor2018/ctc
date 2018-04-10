@@ -99,19 +99,6 @@ class DataGenerator(keras.utils.Sequence):
         print "input length: ", input_length
         print "label_length: ", label_length
 
-        # Input to model with ctc: [x_data, y_true, input_length, label_length]
-
-        """
-        inputs = {'the_input': X_data,
-                  'the_labels': labels,
-                  'input_length': input_length,
-                  'label_length': label_length,
-                  'source_str': source_str  # used for visualization only
-        }
-        outputs = {'ctc': np.zeros([size])}  # dummy data for dummy loss function
-        return (inputs, outputs)
-        """
-
         inputs = {'the_input': x_data,
                   'the_labels': y_data,
                   'input_length': input_length,
@@ -119,7 +106,7 @@ class DataGenerator(keras.utils.Sequence):
 
         outputs = {'ctc': np.zeros([self.batch_size])} # dummy data for dummy loss function
 
-        return inputs, y_data
+        return inputs, outputs
 
     def on_epoch_end(self):
         'Updates indexes after each epoch'
@@ -148,18 +135,18 @@ class DataGenerator(keras.utils.Sequence):
 
         return mfcc_frames, x_length
 
-    # Plots mfcc
-    def plot_mfcc(self, mfcc_frames):
-
-        plt.figure(figsize=(10, 4))
-        librosa.display.specshow(mfcc_frames, x_axis='time')
-        plt.colorbar()
-        plt.title('MFCC')
-        plt.tight_layout()
-        plt.interactive(False)
-        plt.show()
-
     def get_seq_size(self, frame, sr):
         mfcc = librosa.feature.mfcc(frame, sr, n_fft=self.frame_length, hop_length=self.hop_length,
                                     n_mfcc=self.mfcc_features)
         return mfcc.shape[1]
+
+
+# Plots mfcc
+def plot_mfcc(self, mfcc_frames):
+    plt.figure(figsize=(10, 4))
+    librosa.display.specshow(mfcc_frames, x_axis='time')
+    plt.colorbar()
+    plt.title('MFCC')
+    plt.tight_layout()
+    plt.interactive(False)
+    plt.show()
