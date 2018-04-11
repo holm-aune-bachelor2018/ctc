@@ -28,26 +28,26 @@ def dnn_brnn(units, input_dim=12, output_dim=29):
     # 3 fully connected layers DNN ReLu
     # Dropout rate 10 % at each FC layer
 
-    x = TimeDistributed(Dropout(0.1))(x)
-    x = TimeDistributed(Dense(units=units, name='fc1', kernel_initializer='random_normal', activation=clipped_relu))(x)
+    x = TimeDistributed(Dropout(0.1), name='dropout_1')(x)
+    x = TimeDistributed(Dense(units=units, name='fc1', kernel_initializer='random_normal', activation=clipped_relu), name='fc_1')(x)
 
-    x = TimeDistributed(Dropout(0.1))(x)
-    x = TimeDistributed(Dense(units=units, name='fc2', kernel_initializer='random_normal', activation=clipped_relu))(x)
+    x = TimeDistributed(Dropout(0.1), name='dropout_2')(x)
+    x = TimeDistributed(Dense(units=units, name='fc2', kernel_initializer='random_normal', activation=clipped_relu), name='fc_2')(x)
 
-    x = TimeDistributed(Dropout(0.1))(x)
-    x = TimeDistributed(Dense(units=units, name='fc3', kernel_initializer='random_normal', activation=clipped_relu))(x)
+    x = TimeDistributed(Dropout(0.1), name='dropout_3')(x)
+    x = TimeDistributed(Dense(units=units, name='fc3', kernel_initializer='random_normal', activation=clipped_relu), name='fc_3')(x)
 
     # TODO: mergemode? default = concat, kernel_initializer? bias_initializer?
     # Bidirectional RNN (with ReLu ?)
     # x = BatchNormalization()(x)
     x = Bidirectional(SimpleRNN(units, name='bi_rnn1', activation='relu', return_sequences=True),
-                      merge_mode='sum')(x)
+                      merge_mode='sum', name='bi_rnn')(x)
 
     # 1 fully connected relu layer + softmax
-    inner = TimeDistributed(Dense(units=units, name='fc4', kernel_initializer='random_normal', activation='relu'))(x)
+    inner = TimeDistributed(Dense(units=units, name='fc4', kernel_initializer='random_normal', activation='relu'), name='fc_4')(x)
 
     # Output layer
-    y_pred = TimeDistributed(Dense(units=output_dim, name='softmax', activation='softmax'))(inner)
+    y_pred = TimeDistributed(Dense(units=output_dim, name='softmax', activation='softmax'), name='softmax')(inner)
 
     ###### CTC ####
     # y_input layers (transcription data) for CTC loss

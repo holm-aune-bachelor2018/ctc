@@ -46,7 +46,7 @@ metrics = ['accuracy']
 
 model = nn_models.dnn_brnn(units, params.get('mfcc_features'), output_dim)
 model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
-# model.summary()
+model.summary()
 
 y_pred = model.get_layer('ctc').input[0]
 input_data = model.get_layer('the_input').input
@@ -58,11 +58,11 @@ loss_cb = LossCallback(test_func, validation_generator)
 
 # Train model on dataset
 model.fit_generator(generator=training_generator,
-                    validation_data=validation_generator,
                     epochs=epochs,
-                    shuffle=True,
+                    verbose=1,
                     callbacks=[loss_cb],
-                    verbose=2)
+                    validation_data=validation_generator,
+                    shuffle=True)
 
 
 K.clear_session()
