@@ -14,31 +14,39 @@ class LossCallback(keras.callbacks.Callback):
 #    def on_train_begin(self, logs={}):
 
     def on_epoch_end(self, epoch, logs={}):
-        input, output = self.validation_gen.__getitem__(0)
+        batch = 0
+        input, output = self.validation_gen.__getitem__(batch)
 
-        res = epoch_stats(self.test_func, input.get("the_input"))
-        print "Res epoch stats: ", res
-        #res = decode_batch(self.test_func, input.get("the_input"))
-        #print "Res of decode batch: ", res
+        x_data = input.get("the_input")
+        input_length = input.get("input_length")
+
+        # res = epoch_stats(self.test_func, x_data)
+        # print "Res epoch stats: ", res
+        res = decode_batch(self.test_func, x_data, input_length)
+        # print "Res of decode batch: ", res
 
 
 # K.ctc_decode?
 # For a real OCR application, this should be beam search with a dictionary
 # and language model.  For this example, best path is sufficient.
-def decode_batch(test_func, input, input_length=0):
-    y_pred = test_func([input])[0]
-    ret = []
+def decode_batch(test_func, x_data, input_length=0):
+    y_pred = test_func([x_data])[0]
+    print "y_pred shape: ", y_pred.shape
+    # K.ctc_decode(y_pred, input_length, greedy=True, beam_width=100, top_paths=1)
 
-    #K.ctc_decode(y_pred, input_length, greedy=True, beam_width=100, top_paths=1)
+    tuple = K.ctc_decode(y_pred, input_length)
+    print "tuple [0][0] ", tuple[0][0]
+    print "tuple [1][0] ", tuple[1][0]
 
-    ret = K.ctc_decode(y_pred, input_length)
-    for j in range(y_pred.shape[0]):
-        out_best = list(np.argmax(y_pred[j, 2:], 1))
-        out_best = [k for k, g in itertools.groupby(out_best)]
-        print "Pred in int: ", out_best
-        outstr = int_to_text_sequence(out_best)
-        ret.append(outstr)
-    return ret
+    res = 0
+    # res = []
+    # for j in range(y_pred.shape[0]):
+    #    out_best = list(np.argmax(y_pred[j, 2:], 1))
+    #    out_best = [k for k, g in itertools.groupby(out_best)]
+    #    print "Pred in int: ", out_best
+    #    outstr = int_to_text_sequence(out_best)
+    #    res.append(outstr)
+    return res
 
 
 def epoch_stats(test_func, input):

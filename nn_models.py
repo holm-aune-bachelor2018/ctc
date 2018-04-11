@@ -55,7 +55,7 @@ def dnn_brnn(units, input_dim=12, output_dim=29):
     input_length = Input(name='input_length', shape=[1], dtype='float32')   # unpadded len of all x_sequences in batch (batch_size * 1)
     label_length = Input(name='label_length', shape=[1], dtype='float32')   # unpadded len of all y_sequences in batch (batch_size * 1)
 
-    Model(inputs=input_data, outputs=y_pred).summary()
+    # Model(inputs=input_data, outputs=y_pred).summary()
 
     # Lambda layer with ctc_loss function due to Keras not supporting CTC layers
     loss_out = Lambda(ctc_lambda_func, name='ctc', output_shape=(1,))([y_pred, labels, input_length, label_length])
