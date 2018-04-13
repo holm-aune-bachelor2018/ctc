@@ -6,7 +6,7 @@ from DataGenerator import DataGenerator
 import keras.backend as K
 from LossCallback import LossCallback
 # Preprocessing
-path = "sample_data/wav_sample/sample_librivox-dev-clean.csv"
+path = "data/librivox-dev-clean.csv"
 
 
 # df_final.to_csv('data.csv')
