@@ -23,7 +23,8 @@ class DataGenerator(keras.utils.Sequence):
 
     def __len__(self):
         'Denotes the number of batches per epoch'
-        epoch_length = int(np.floor(self.df.shape[0] / self.batch_size))
+        # epoch_length = int(np.floor(self.df.shape[0] / self.batch_size))
+        epoch_length = 12
         return epoch_length
 
     def __getitem__(self, index):
@@ -68,8 +69,9 @@ class DataGenerator(keras.utils.Sequence):
         # Extract mfcc features and pad so every frame-sequence is equal length
         for i in range (0,len(x_data_raw)):
             x, x_len = self.mfcc(x_data_raw[i], sr, max_x_length)
+            # plot_mfcc(x.T)
             x_data = np.insert(x_data, i, x, axis=0)
-            len_x_seq.append(x_len)
+            len_x_seq.append(x_len - 2)     # -2 because ctc discards the first two outputs of the rnn network
 
         # Finds longest sequence in y for padding
         max_y_length = len(max(y_data_unpadded, key=len))
@@ -85,7 +87,6 @@ class DataGenerator(keras.utils.Sequence):
             y_data = np.insert(y_data, i, y, axis=0)
 
         # print "DataX shape: ", x_data.shape
-        # plot_mfcc(x_data.T)
         # print "y_data: \n", y_data
 
         input_length = np.array(len_x_seq)  # batch_size * 1
@@ -93,11 +94,11 @@ class DataGenerator(keras.utils.Sequence):
 
         print "\nIndexes: ", indexes
         print "x_data shape: ", x_data.shape
-        print "y_data shape: ", y_data.shape
+        # print "y_data shape: ", y_data.shape
         # print "input_length shape: ", input_length.shape
         # print "label_length shape: ", label_length.shape
-        print "input length: ", input_length
-        print "label_length: ", label_length
+        # print "input length: ", input_length
+        # print "label_length: ", label_length
 
         inputs = {'the_input': x_data,
                   'the_labels': y_data,
@@ -142,7 +143,7 @@ class DataGenerator(keras.utils.Sequence):
 
 
 # Plots mfcc
-def plot_mfcc(self, mfcc_frames):
+def plot_mfcc(mfcc_frames):
     plt.figure(figsize=(10, 4))
     librosa.display.specshow(mfcc_frames, x_axis='time')
     plt.colorbar()

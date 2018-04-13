@@ -23,12 +23,12 @@ def dnn_brnn(units, input_dim=12, output_dim=29):
     input_data = Input(name='the_input',shape=(None, input_dim))
 
     # Masking layer
-    x = Masking(mask_value=0.)(input_data)
+    # x = Masking(mask_value=0.)(input_data)
 
     # 3 fully connected layers DNN ReLu
     # Dropout rate 10 % at each FC layer
 
-    x = TimeDistributed(Dropout(0.1), name='dropout_1')(x)
+    x = TimeDistributed(Dropout(0.1), name='dropout_1')(input_data)
     x = TimeDistributed(Dense(units=units, name='fc1', kernel_initializer='random_normal', activation=clipped_relu), name='fc_1')(x)
 
     x = TimeDistributed(Dropout(0.1), name='dropout_2')(x)
@@ -71,7 +71,7 @@ def ctc_lambda_func(args):
     # the 2 is critical here since the first couple outputs of the RNN
     # tend to be garbage:
     # print "y_pred_shape: ", y_pred.shape
-    # y_pred = y_pred[:, 2:, :]
+    y_pred = y_pred[:, 2:, :]
     # print "y_pred_shape: ", y_pred.shape
     return K.ctc_batch_cost(labels, y_pred, input_length, label_length)
 

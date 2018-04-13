@@ -18,7 +18,7 @@ validation_df = pd.DataFrame()
 validation_df = validation_df.append(input_dataframe, ignore_index=True)
 
 # Parameters
-params = {'batch_size': 5,
+params = {'batch_size': 12,
           'frame_length': 20 * frequency,
           'hop_length': 10 * frequency,
           'mfcc_features': 26,
@@ -33,7 +33,7 @@ units = 512                                         # numb of hidden nodes
 input_shape = (None, params.get('mfcc_features'))   # "None" to be able to process batches of any size
 output_dim = 29                                     # output dimension (n-1)
 
-epochs = 2                                          # number of epochs
+epochs = 6                                          # number of epochs
 
 # loss function to compile model, actual CTC loss function defined as a lambda layer in model
 loss = {'ctc': lambda y_true, y_pred: y_pred}
