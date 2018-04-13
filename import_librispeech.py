@@ -1,4 +1,4 @@
-#!/home/envs/tensorflow# /bin/python
+#!~/envs/tensorflow# /bin/python
 #SCRIPT: MOZILLA DEEPSPEECH
 
 '''
@@ -27,8 +27,9 @@ import progressbar
 import subprocess
 import tarfile
 import unicodedata
+from shutil import copyfile
 
-from sox import Transformer
+# from sox import Transformer
 from tensorflow.contrib.learn.python.learn.datasets import base
 from tensorflow.python.platform import gfile
 
@@ -210,12 +211,14 @@ def _convert_audio_and_split_sentences(extracted_dir, data_set, dest_dir):
 
                     # Convert corresponding FLAC to a WAV
                     flac_file = os.path.join(root, seqid + ".flac")
-                    wav_file = os.path.join(target_dir, seqid + ".wav")
-                    if not os.path.exists(wav_file):
-                        Transformer().build(flac_file, wav_file)
-                    wav_filesize = os.path.getsize(wav_file)
+                    target_file = os.path.join(target_dir, seqid + ".flac")
+                    # wav_file = os.path.join(target_dir, seqid + ".wav")
+                    if not os.path.exists(target_file):
+                        copyfile(flac_file, target_file)
+                        # Transformer().build(flac_file, wav_file)
+                    wav_filesize = os.path.getsize(target_file)
 
-                    files.append((os.path.abspath(wav_file), wav_filesize, transcript))
+                    files.append((os.path.abspath(target_file), wav_filesize, transcript))
 
     return pandas.DataFrame(data=files, columns=["wav_filename", "wav_filesize", "transcript"])
 
