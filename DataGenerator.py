@@ -4,7 +4,7 @@
 import librosa
 import librosa.display
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import data
 from keras.preprocessing.sequence import pad_sequences
 import keras
@@ -143,6 +143,7 @@ class DataGenerator(keras.utils.Sequence):
 
 
 # Plots mfcc
+"""
 def plot_mfcc(mfcc_frames):
     plt.figure(figsize=(10, 4))
     librosa.display.specshow(mfcc_frames, x_axis='time')
@@ -151,3 +152,4 @@ def plot_mfcc(mfcc_frames):
     plt.tight_layout()
     plt.interactive(False)
     plt.show()
+"""
