@@ -2,9 +2,9 @@
 # and modified to fit data
 
 import librosa
-# import librosa.display
+import librosa.display
 import numpy as np
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import data
 from keras.preprocessing.sequence import pad_sequences
 import keras
@@ -13,18 +13,19 @@ class DataGenerator(keras.utils.Sequence):
     'Generates data for Keras'
     def __init__(self, df, batch_size, frame_length, hop_length, mfcc_features, shuffle=True):
         'Initialization'
-        self.df = df
+        self.df = df.copy()
         self.batch_size = batch_size
         self.frame_length = frame_length
         self.hop_length = hop_length
         self.mfcc_features = mfcc_features
         self.shuffle = shuffle
-        self.on_epoch_end()
+        self.indexes = np.arange(len(self.df))
+        # self.on_epoch_end()
 
     def __len__(self):
         'Denotes the number of batches per epoch'
         # epoch_length = int(np.floor(self.df.shape[0] / self.batch_size))
-        epoch_length = 12
+        epoch_length = 10
         return epoch_length
 
     def __getitem__(self, index):
@@ -48,10 +49,12 @@ class DataGenerator(keras.utils.Sequence):
 
         len_y_seq = []
         sr = 0
-
+        print "indexes: ", indexes
         # loads wav-files and transcripts
         for i in indexes:
+            print "index: ", i
             path = self.df.iloc[i]['wav_filename']
+            print "File path: ", path
             frames, sr = librosa.load(path, sr=None)
             x_data_raw.append(frames)
 
@@ -94,7 +97,7 @@ class DataGenerator(keras.utils.Sequence):
 
         print "\nIndexes: ", indexes
         print "x_data shape: ", x_data.shape
-        # print "y_data shape: ", y_data.shape
+        print "y_data shape: ", y_data.shape
         # print "input_length shape: ", input_length.shape
         # print "label_length shape: ", label_length.shape
         # print "input length: ", input_length
@@ -143,7 +146,6 @@ class DataGenerator(keras.utils.Sequence):
 
 
 # Plots mfcc
-"""
 def plot_mfcc(mfcc_frames):
     plt.figure(figsize=(10, 4))
     librosa.display.specshow(mfcc_frames, x_axis='time')
@@ -152,4 +154,3 @@ def plot_mfcc(mfcc_frames):
     plt.tight_layout()
     plt.interactive(False)
     plt.show()
-"""
