@@ -2,36 +2,41 @@
 # and modified to fit data
 
 import librosa
-import librosa.display
+import soundfile as sf
 import numpy as np
-import matplotlib.pyplot as plt
 import data
 from keras.preprocessing.sequence import pad_sequences
-import keras
+from keras.utils import Sequence
 
-class DataGenerator(keras.utils.Sequence):
+# import librosa.display
+# import matplotlib.pyplot as plt
+
+class DataGenerator(Sequence):
     'Generates data for Keras'
-    def __init__(self, df, batch_size, frame_length, hop_length, mfcc_features, shuffle=True):
+    def __init__(self, df, batch_size, frame_length, hop_length, mfcc_features, epoch_length=0):
         'Initialization'
         self.df = df.copy()
         self.batch_size = batch_size
         self.frame_length = frame_length
         self.hop_length = hop_length
         self.mfcc_features = mfcc_features
-        self.shuffle = shuffle
+        self.epoch_length = epoch_length
+
+        # Initializing indexes
         self.indexes = np.arange(len(self.df))
-        # self.on_epoch_end()
 
     def __len__(self):
         'Denotes the number of batches per epoch'
-        # epoch_length = int(np.floor(self.df.shape[0] / self.batch_size))
-        epoch_length = 10
+        if self.epoch_length == 0:
+            epoch_length = int(np.floor(self.df.shape[0] / self.batch_size))
+        else :
+            epoch_length = self.epoch_length
         return epoch_length
 
     def __getitem__(self, index):
         """
         Generates a batch of correctly shaped X and Y data from given dataframe
-        :param df: Dataframes containing (wav_filename, wav_filesize, transcript)
+        :param df: Dataframes containing (filename, filesize, transcript)
         :param frame_length: Length of each frame generated.
         :param hop_length: How far to jump for each frame.
         :param mfcc_features:
@@ -49,20 +54,24 @@ class DataGenerator(keras.utils.Sequence):
 
         len_y_seq = []
         sr = 0
-        print "indexes: ", indexes
+        # print "\nIndexes: ", indexes
         # loads wav-files and transcripts
         for i in indexes:
-            print "index: ", i
-            path = self.df.iloc[i]['wav_filename']
-            print "File path: ", path
-            frames, sr = librosa.load(path, sr=None)
+            # Read sound data
+            path = self.df.iloc[i]['filename']
+            frames, sr = sf.read(path)
             x_data_raw.append(frames)
-
+            # Read transcript data
             y_txt = self.df.iloc[i]['transcript']
             y_int = data.text_to_int_sequence(y_txt)
             y_data_unpadded.append(y_int)
 
+            # Save length of transcripts for the CTC
             len_y_seq.append(len(y_int))
+
+            # print "\nindex: ", i
+            # print "File path: ", path
+            # print "x_data_raw length: ", len(x_data_raw)
 
         # Finds longest frame in batch for padding
         max_x_length = self.get_seq_size(max(x_data_raw, key=len), sr)
@@ -72,7 +81,6 @@ class DataGenerator(keras.utils.Sequence):
         # Extract mfcc features and pad so every frame-sequence is equal length
         for i in range (0,len(x_data_raw)):
             x, x_len = self.mfcc(x_data_raw[i], sr, max_x_length)
-            # plot_mfcc(x.T)
             x_data = np.insert(x_data, i, x, axis=0)
             len_x_seq.append(x_len - 2)     # -2 because ctc discards the first two outputs of the rnn network
 
@@ -113,6 +121,7 @@ class DataGenerator(keras.utils.Sequence):
         return inputs, outputs
 
     def on_epoch_end(self):
+        print "epoke slutt (datagen)"
         'Updates indexes after each epoch'
         self.indexes = np.arange(len(self.df))
         # if self.shuffle == True:
@@ -144,7 +153,7 @@ class DataGenerator(keras.utils.Sequence):
                                     n_mfcc=self.mfcc_features)
         return mfcc.shape[1]
 
-
+"""
 # Plots mfcc
 def plot_mfcc(mfcc_frames):
     plt.figure(figsize=(10, 4))
@@ -154,3 +163,4 @@ def plot_mfcc(mfcc_frames):
     plt.tight_layout()
     plt.interactive(False)
     plt.show()
+"""

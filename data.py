@@ -105,7 +105,7 @@ def combine_all_wavs_and_trans_from_csvs(csvslist, sortagrad=True, createwordlis
     }
 
     if sortagrad:
-        df_final = df_final.sort_values(by='wav_filesize', ascending=True)
+        df_final = df_final.sort_values(by='filesize', ascending=True)
     else:
         df_final = df_final.sample(frac=1).reset_index(drop=True)
 

@@ -6,43 +6,42 @@ from DataGenerator import DataGenerator
 import keras.backend as K
 from LossCallback import LossCallback
 # Preprocessing
-path = "data/librivox-dev-clean.csv"
-
-
-# df_final.to_csv('data.csv')
+path = "dataflac/librivox-dev-clean.csv"
 dataprop, input_dataframe = data.combine_all_wavs_and_trans_from_csvs(path)
-frequency = 16
+# input_dataframe.to_csv('data.csv')
 
 # TODO: validation data?
 validation_df = pd.DataFrame()
 validation_df = validation_df.append(input_dataframe, ignore_index=True)
+
+frequency = 16
 
 # Parameters
 params = {'batch_size': 12,
           'frame_length': 20 * frequency,
           'hop_length': 10 * frequency,
           'mfcc_features': 26,
-          'shuffle': False}
+          'epoch_length': 12        # number of batches per epoch (for testing)
+}
 
 # Generators
 training_generator = DataGenerator(input_dataframe, **params)
 validation_generator = DataGenerator(validation_df, **params)
 
 # Model specifications
+epochs = 10                                         # number of epochs
+
 units = 512                                         # numb of hidden nodes
 input_shape = (None, params.get('mfcc_features'))   # "None" to be able to process batches of any size
 output_dim = 29                                     # output dimension (n-1)
 
-epochs = 6                                          # number of epochs
+eps = 1e-8                                          # epsilon 1e-8
+learning_rate = 0.001
+optimizer = optimizers.Adam(lr=learning_rate, epsilon=eps, clipnorm=2.0)
+metrics = ['accuracy']
 
 # loss function to compile model, actual CTC loss function defined as a lambda layer in model
 loss = {'ctc': lambda y_true, y_pred: y_pred}
-
-eps = 1e-8                                          # epsilon 1e-8
-learning_rate = 0.001
-optimizer = optimizers.Adam(lr=learning_rate, epsilon=eps, clipnorm=5.0)
-metrics = ['accuracy']
-
 
 model = nn_models.dnn_brnn(units, params.get('mfcc_features'), output_dim)
 model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
@@ -53,7 +52,6 @@ input_data = model.get_layer('the_input').input
 
 test_func = K.function([input_data], [y_pred])
 
-# viz_cb = VizCallback(run_name, test_func, img_gen.next_val())
 loss_cb = LossCallback(test_func, validation_generator)
 
 # Train model on dataset
@@ -61,8 +59,7 @@ model.fit_generator(generator=training_generator,
                     epochs=epochs,
                     verbose=1,
                     callbacks=[loss_cb],
-                    validation_data=validation_generator,
-                    shuffle=True)
+                    validation_data=validation_generator)
 
 
 K.clear_session()

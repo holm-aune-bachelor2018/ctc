@@ -1,4 +1,4 @@
-#!~/envs/tensorflow# /bin/python
+#!/home/marit/tensorflowpy2/bin/python
 #SCRIPT: MOZILLA DEEPSPEECH
 
 '''
@@ -19,16 +19,15 @@ from __future__ import absolute_import, division, print_function
 import sys
 import os
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
-
 import codecs
 import fnmatch
 import pandas
-import progressbar
-import subprocess
 import tarfile
 import unicodedata
 from shutil import copyfile
 
+# import progressbar
+# import subprocess
 # from sox import Transformer
 from tensorflow.contrib.learn.python.learn.datasets import base
 from tensorflow.python.platform import gfile
@@ -36,7 +35,7 @@ from tensorflow.python.platform import gfile
 def _download_and_preprocess_data(data_dir):
     # Conditionally download data to data_dir
     print("Downloading Librivox data set (55GB) into {} if not already present...".format(data_dir))
-    #with progressbar.ProgressBar(max_value=2, widget=progressbar.AdaptiveETA) as bar:
+    # with progressbar.ProgressBar(max_value=2, widget=progressbar.AdaptiveETA) as bar:
 
 
     DEV_CLEAN_URL = "http://www.openslr.org/resources/12/dev-clean.tar.gz"
@@ -44,9 +43,9 @@ def _download_and_preprocess_data(data_dir):
     def filename_of(x): return os.path.split(x)[1]
 
     dev_clean = base.maybe_download(filename_of(DEV_CLEAN_URL), data_dir, DEV_CLEAN_URL)
-    #bar.update(0)
+    # bar.update(0)
     test_clean = base.maybe_download(filename_of(TEST_CLEAN_URL), data_dir, TEST_CLEAN_URL)
-    #bar.update(1)
+    # bar.update(1)
 
     '''
     TRAIN_CLEAN_100_URL = "http://www.openslr.org/resources/12/train-clean-100.tar.gz"
@@ -81,14 +80,14 @@ def _download_and_preprocess_data(data_dir):
     # We extract each archive into data_dir, but test for existence in
     # data_dir/LibriSpeech because the archives share that root.
     print("Extracting librivox data if not already extracted...")
-    #with progressbar.ProgressBar(max_value=2, widget=progressbar.AdaptiveETA) as bar:
+    # with progressbar.ProgressBar(max_value=2, widget=progressbar.AdaptiveETA) as bar:
     LIBRIVOX_DIR = "LibriSpeech"
     work_dir = os.path.join(data_dir, LIBRIVOX_DIR)
 
     _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "dev-clean"), dev_clean)
-    #bar.update(0)
+    # bar.update(0)
     _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "test-clean"), test_clean)
-    #bar.update(1)
+    # bar.update(1)
 
     '''
     _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "train-clean-100"), train_clean_100)
@@ -121,12 +120,12 @@ def _download_and_preprocess_data(data_dir):
     #  data_dir/LibriSpeech/split-wav/1-2-1.txt
     #  data_dir/LibriSpeech/split-wav/1-2-2.txt
     #  ...
-    print("Converting FLAC to WAV and splitting transcriptions...")
-    #with progressbar.ProgressBar(max_value=2,  widget=progressbar.AdaptiveETA) as bar:
-    dev_clean = _convert_audio_and_split_sentences(work_dir, "dev-clean", "dev-clean-wav")
-    #bar.update(0)
-    test_clean = _convert_audio_and_split_sentences(work_dir, "test-clean", "test-clean-wav")
-    #bar.update(1)
+    print("Moving files and splitting transcriptions...")
+    # with progressbar.ProgressBar(max_value=2,  widget=progressbar.AdaptiveETA) as bar:
+    dev_clean = _convert_audio_and_split_sentences(work_dir, "dev-clean", "dev-clean-new")
+    # bar.update(0)
+    test_clean = _convert_audio_and_split_sentences(work_dir, "test-clean", "test-clean-new")
+    # bar.update(1)
 
     '''
     train_100 = _convert_audio_and_split_sentences(work_dir, "train-clean-100", "train-clean-100-wav")
@@ -170,9 +169,13 @@ def _maybe_extract(data_dir, extracted_data, archive):
         tar.extractall(data_dir)
         tar.close()
 
+
 def _convert_audio_and_split_sentences(extracted_dir, data_set, dest_dir):
     source_dir = os.path.join(extracted_dir, data_set)
     target_dir = os.path.join(extracted_dir, dest_dir)
+
+    # print('Source dir: ', source_dir)
+    # print('target dir: ', target_dir)
 
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
@@ -210,17 +213,17 @@ def _convert_audio_and_split_sentences(extracted_dir, data_set, dest_dir):
                     transcript = transcript.lower().strip()
 
                     # Convert corresponding FLAC to a WAV
-                    flac_file = os.path.join(root, seqid + ".flac")
+                    old_file = os.path.join(root, seqid + ".flac")
                     target_file = os.path.join(target_dir, seqid + ".flac")
                     # wav_file = os.path.join(target_dir, seqid + ".wav")
                     if not os.path.exists(target_file):
-                        copyfile(flac_file, target_file)
-                        # Transformer().build(flac_file, wav_file)
-                    wav_filesize = os.path.getsize(target_file)
+                        copyfile(old_file, target_file)
+                        # Transformer().build(old_file, target_file)
+                    filesize = os.path.getsize(target_file)
+                    target_file_path = os.path.relpath(target_file)
+                    files.append((target_file_path, filesize, transcript))
 
-                    files.append((os.path.abspath(target_file), wav_filesize, transcript))
-
-    return pandas.DataFrame(data=files, columns=["wav_filename", "wav_filesize", "transcript"])
+    return pandas.DataFrame(data=files, columns=["filename", "filesize", "transcript"])
 
 if __name__ == "__main__":
     _download_and_preprocess_data(sys.argv[1])

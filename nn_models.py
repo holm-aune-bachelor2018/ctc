@@ -23,18 +23,18 @@ def dnn_brnn(units, input_dim=12, output_dim=29):
     input_data = Input(name='the_input',shape=(None, input_dim))
 
     # Masking layer
-    # x = Masking(mask_value=0.)(input_data)
+    x = Masking(mask_value=0.)(input_data)
 
     # 3 fully connected layers DNN ReLu
     # Dropout rate 10 % at each FC layer
 
-    x = TimeDistributed(Dropout(0.1), name='dropout_1')(input_data)
+    x = TimeDistributed(Dropout(0.2), name='dropout_1')(x)
     x = TimeDistributed(Dense(units=units, name='fc1', kernel_initializer='random_normal', activation=clipped_relu), name='fc_1')(x)
 
-    x = TimeDistributed(Dropout(0.1), name='dropout_2')(x)
+    x = TimeDistributed(Dropout(0.2), name='dropout_2')(x)
     x = TimeDistributed(Dense(units=units, name='fc2', kernel_initializer='random_normal', activation=clipped_relu), name='fc_2')(x)
 
-    x = TimeDistributed(Dropout(0.1), name='dropout_3')(x)
+    x = TimeDistributed(Dropout(0.2), name='dropout_3')(x)
     x = TimeDistributed(Dense(units=units, name='fc3', kernel_initializer='random_normal', activation=clipped_relu), name='fc_3')(x)
 
     # TODO: mergemode? default = concat, kernel_initializer? bias_initializer?

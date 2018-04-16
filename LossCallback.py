@@ -13,7 +13,12 @@ class LossCallback(keras.callbacks.Callback):
 
 #    def on_train_begin(self, logs={}):
 
+    def on_batch_begin(self, batch, logs=None):
+        print "\nBatch nr: ", batch
+
     def on_epoch_end(self, epoch, logs={}):
+        print "Epoke slutt "
+        """
         if (epoch%5 == 0):
             batch = 0
             input, output = self.validation_gen.__getitem__(batch)
@@ -25,7 +30,7 @@ class LossCallback(keras.callbacks.Callback):
             # print "Res epoch stats: ", res
             res = decode_batch(self.test_func, x_data, input_length)
             # print "Res of decode batch: ", res
-
+        """
 
 # K.ctc_decode?
 # For a real OCR application, this should be beam search with a dictionary
