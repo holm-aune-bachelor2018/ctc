@@ -1,18 +1,19 @@
 import nn_models
 from keras import optimizers
 import data
-import pandas as pd
 from DataGenerator import DataGenerator
 import keras.backend as K
 from LossCallback import LossCallback
+
 # Preprocessing
 path = "dataflac/librivox-dev-clean.csv"
-dataprop, input_dataframe = data.combine_all_wavs_and_trans_from_csvs(path)
-# input_dataframe.to_csv('data.csv')
+path_validation = "dataflac/librivox-test-clean.csv"
 
-# TODO: validation data?
-validation_df = pd.DataFrame()
-validation_df = validation_df.append(input_dataframe, ignore_index=True)
+_, input_dataframe = data.combine_all_wavs_and_trans_from_csvs(path)
+_, validation_df = data.combine_all_wavs_and_trans_from_csvs(path_validation)
+
+input_dataframe.to_csv('data.csv')
+validation_df.to_csv('validdata.csv')
 
 frequency = 16
 
@@ -20,7 +21,7 @@ frequency = 16
 params = {'batch_size': 12,
           'frame_length': 20 * frequency,
           'hop_length': 10 * frequency,
-          'mfcc_features': 26,
+          'mfcc_features': 13,
           'epoch_length': 12        # number of batches per epoch (for testing)
 }
 
@@ -31,14 +32,15 @@ validation_generator = DataGenerator(validation_df, **params)
 # Model specifications
 epochs = 10                                         # number of epochs
 
-units = 512                                         # numb of hidden nodes
+units = 64                                         # numb of hidden nodes
 input_shape = (None, params.get('mfcc_features'))   # "None" to be able to process batches of any size
 output_dim = 29                                     # output dimension (n-1)
 
 eps = 1e-8                                          # epsilon 1e-8
 learning_rate = 0.001
 optimizer = optimizers.Adam(lr=learning_rate, epsilon=eps, clipnorm=2.0)
-metrics = ['accuracy']
+metrics = []
+# 'accuracy'
 
 # loss function to compile model, actual CTC loss function defined as a lambda layer in model
 loss = {'ctc': lambda y_true, y_pred: y_pred}

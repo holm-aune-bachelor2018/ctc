@@ -215,7 +215,7 @@ def _convert_audio_and_split_sentences(extracted_dir, data_set, dest_dir):
                     # Convert corresponding FLAC to a WAV
                     old_file = os.path.join(root, seqid + ".flac")
                     target_file = os.path.join(target_dir, seqid + ".flac")
-                    # wav_file = os.path.join(target_dir, seqid + ".wav")
+                    # target_file = os.path.join(target_dir, seqid + ".wav")
                     if not os.path.exists(target_file):
                         copyfile(old_file, target_file)
                         # Transformer().build(old_file, target_file)

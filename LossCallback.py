@@ -1,11 +1,11 @@
-import keras
-import itertools
+from keras.callbacks import Callback
+# import itertools
 import numpy as np
 from text import wer, int_to_text_sequence, text_to_int_sequence
-from keras import backend as K
+# from keras import backend as K
 
 
-class LossCallback(keras.callbacks.Callback):
+class LossCallback(Callback):
 
     def __init__(self, test_func, validation_gen):
         self.test_func = test_func
@@ -13,12 +13,7 @@ class LossCallback(keras.callbacks.Callback):
 
 #    def on_train_begin(self, logs={}):
 
-    def on_batch_begin(self, batch, logs=None):
-        print "\nBatch nr: ", batch
-
     def on_epoch_end(self, epoch, logs={}):
-        print "Epoke slutt "
-        """
         if (epoch%5 == 0):
             batch = 0
             input, output = self.validation_gen.__getitem__(batch)
@@ -30,7 +25,7 @@ class LossCallback(keras.callbacks.Callback):
             # print "Res epoch stats: ", res
             res = decode_batch(self.test_func, x_data, input_length)
             # print "Res of decode batch: ", res
-        """
+
 
 # K.ctc_decode?
 # For a real OCR application, this should be beam search with a dictionary
@@ -41,11 +36,11 @@ def decode_batch(test_func, x_data, input_length=0):
     print "y_pred 0 shape :", y_pred[0].shape
     array = np.arange(y_pred[0].shape[0])
     print "Array shape: ", array.shape
-    res0 = np.argmax(y_pred[0], axis=0)
-    res1 = np.argmax(y_pred[1], axis=1)
+    res0 = np.argmax(y_pred[4], axis=1)
+    res1 = np.argmax(y_pred[6], axis=1)
 
-    print "Batch0 maximum", res0
-    print "Batch1 maximum", res1
+    print "\nBatch0 maximum", res0
+    print "\nBatch1 maximum", res1
 
     # K.ctc_decode(y_pred, input_length, greedy=True, beam_width=100, top_paths=1)
     # tuple = K.ctc_decode(y_pred, input_length)

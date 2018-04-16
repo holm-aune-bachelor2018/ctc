@@ -121,7 +121,6 @@ class DataGenerator(Sequence):
         return inputs, outputs
 
     def on_epoch_end(self):
-        print "epoke slutt (datagen)"
         'Updates indexes after each epoch'
         self.indexes = np.arange(len(self.df))
         # if self.shuffle == True:

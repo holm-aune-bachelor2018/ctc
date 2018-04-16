@@ -18,9 +18,10 @@ def dnn_brnn(units, input_dim=12, output_dim=29):
      1 layer of ReLu
      1 layer of softmax
     """
+    dtype = 'float32'
 
     # x_input layer, dim: (batch_size * x_seq_size * mfcc_features)
-    input_data = Input(name='the_input',shape=(None, input_dim))
+    input_data = Input(name='the_input',shape=(None, input_dim), dtype=dtype)
 
     # Masking layer
     x = Masking(mask_value=0.)(input_data)
@@ -41,7 +42,7 @@ def dnn_brnn(units, input_dim=12, output_dim=29):
     # Bidirectional RNN (with ReLu ?)
     # x = BatchNormalization()(x)
     x = Bidirectional(SimpleRNN(units, name='bi_rnn1', activation='relu', return_sequences=True),
-                      merge_mode='sum', name='bi_rnn')(x)
+                      merge_mode='concat', name='bi_rnn')(x)
 
     # 1 fully connected relu layer + softmax
     inner = TimeDistributed(Dense(units=units, name='fc4', kernel_initializer='random_normal', activation='relu'), name='fc_4')(x)
@@ -51,14 +52,14 @@ def dnn_brnn(units, input_dim=12, output_dim=29):
 
     ###### CTC ####
     # y_input layers (transcription data) for CTC loss
-    labels = Input(name='the_labels', shape=[None], dtype='float32')        # transcription data (batch_size * y_seq_size)
-    input_length = Input(name='input_length', shape=[1], dtype='float32')   # unpadded len of all x_sequences in batch (batch_size * 1)
-    label_length = Input(name='label_length', shape=[1], dtype='float32')   # unpadded len of all y_sequences in batch (batch_size * 1)
+    labels = Input(name='the_labels', shape=[None], dtype=dtype)        # transcription data (batch_size * y_seq_size)
+    input_length = Input(name='input_length', shape=[1], dtype=dtype)   # unpadded len of all x_sequences in batch (batch_size * 1)
+    label_length = Input(name='label_length', shape=[1], dtype=dtype)   # unpadded len of all y_sequences in batch (batch_size * 1)
 
     # Model(inputs=input_data, outputs=y_pred).summary()
 
     # Lambda layer with ctc_loss function due to Keras not supporting CTC layers
-    loss_out = Lambda(ctc_lambda_func, name='ctc', output_shape=(1,))([y_pred, labels, input_length, label_length])
+    loss_out = Lambda(function=ctc_lambda_func, name='ctc', output_shape=(1,))([y_pred, labels, input_length, label_length])
 
     model = Model(inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
 
