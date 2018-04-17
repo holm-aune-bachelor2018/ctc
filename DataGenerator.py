@@ -8,8 +8,8 @@ import data
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import Sequence
 
-import librosa.display
-import matplotlib.pyplot as plt
+# import librosa.display
+# import matplotlib.pyplot as plt
 
 class DataGenerator(Sequence):
     'Generates data for Keras'
@@ -152,7 +152,7 @@ class DataGenerator(Sequence):
                                     n_mfcc=self.mfcc_features)
         return mfcc.shape[1]
 
-
+"""
 # Plots mfcc
 def plot_mfcc(mfcc_frames):
     print "\n Plotting mfcc with shape: ", mfcc_frames.shape
@@ -164,3 +164,4 @@ def plot_mfcc(mfcc_frames):
     plt.tight_layout()
     plt.interactive(False)
     plt.show()
+"""
