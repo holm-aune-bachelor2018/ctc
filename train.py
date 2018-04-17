@@ -1,3 +1,6 @@
+#!/Users/AnitaKristineAune/tensorflow-py2/bin/python
+
+import sys
 import nn_models
 from keras import optimizers
 import data
@@ -5,34 +8,48 @@ from DataGenerator import DataGenerator
 import keras.backend as K
 from LossCallback import LossCallback
 
+
 # Preprocessing
-path = "dataflac/librivox-dev-clean.csv"
-path_validation = "dataflac/librivox-test-clean.csv"
+path = "data_dir/librivox-dev-clean.csv"
+path_validation = "data_dir/librivox-test-clean.csv"
 
 _, input_dataframe = data.combine_all_wavs_and_trans_from_csvs(path)
 _, validation_df = data.combine_all_wavs_and_trans_from_csvs(path_validation)
 
-input_dataframe.to_csv('data.csv')
-validation_df.to_csv('validdata.csv')
+#input_dataframe.to_csv('data.csv')
+#validation_df.to_csv('validdata.csv')
 
 frequency = 16
 
-# Parameters
-params = {'batch_size': 12,
+# Parameters for script
+# batch_size, mfcc_features, epoch_length, epochs, units
+
+batch_size = int(sys.argv[1])
+mfcc_features = int(sys.argv[2])
+epoch_length = int(sys.argv[3])
+
+# Model specifications
+epochs = int(sys.argv[4])                           # Number of epochs
+units = int(sys.argv[5])                            # Number of hidden nodes
+
+params = {'batch_size': batch_size,
+          'frame_length': 20 * frequency,
+          'hop_length': 10 * frequency,
+          'mfcc_features': mfcc_features,
+          'epoch_length': epoch_length        # number of batches per epoch (for testing)
+}
+'''
+params = {'batch_size': 12,        
           'frame_length': 20 * frequency,
           'hop_length': 10 * frequency,
           'mfcc_features': 13,
-          'epoch_length': 12        # number of batches per epoch (for testing)
+          'epoch_length': 10        # number of batches per epoch (for testing)
 }
-
+'''
 # Generators
 training_generator = DataGenerator(input_dataframe, **params)
 validation_generator = DataGenerator(validation_df, **params)
 
-# Model specifications
-epochs = 10                                         # number of epochs
-
-units = 64                                         # numb of hidden nodes
 input_shape = (None, params.get('mfcc_features'))   # "None" to be able to process batches of any size
 output_dim = 29                                     # output dimension (n-1)
 
@@ -62,6 +79,5 @@ model.fit_generator(generator=training_generator,
                     verbose=1,
                     callbacks=[loss_cb],
                     validation_data=validation_generator)
-
 
 K.clear_session()
