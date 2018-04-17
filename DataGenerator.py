@@ -8,8 +8,8 @@ import data
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import Sequence
 
-# import librosa.display
-# import matplotlib.pyplot as plt
+import librosa.display
+import matplotlib.pyplot as plt
 
 class DataGenerator(Sequence):
     'Generates data for Keras'
@@ -71,7 +71,7 @@ class DataGenerator(Sequence):
 
             # print "\nindex: ", i
             # print "File path: ", path
-            # print "x_data_raw length: ", len(x_data_raw)
+            # print "Sound frames length: ", len(frames)
 
         # Finds longest frame in batch for padding
         max_x_length = self.get_seq_size(max(x_data_raw, key=len), sr)
@@ -81,6 +81,7 @@ class DataGenerator(Sequence):
         # Extract mfcc features and pad so every frame-sequence is equal length
         for i in range (0,len(x_data_raw)):
             x, x_len = self.mfcc(x_data_raw[i], sr, max_x_length)
+            # print "index: ",i," for x-data shape: ", x.shape
             x_data = np.insert(x_data, i, x, axis=0)
             len_x_seq.append(x_len - 2)     # -2 because ctc discards the first two outputs of the rnn network
 
@@ -103,9 +104,8 @@ class DataGenerator(Sequence):
         input_length = np.array(len_x_seq)  # batch_size * 1
         label_length = np.array(len_y_seq)  # batch_size * 1
 
-        print "\nIndexes: ", indexes
-        print "x_data shape: ", x_data.shape
-        print "y_data shape: ", y_data.shape
+        # print "x_data shape: ", x_data.shape
+        # print "y_data shape: ", y_data.shape
         # print "input_length shape: ", input_length.shape
         # print "label_length shape: ", label_length.shape
         # print "input length: ", input_length
@@ -152,14 +152,15 @@ class DataGenerator(Sequence):
                                     n_mfcc=self.mfcc_features)
         return mfcc.shape[1]
 
-"""
+
 # Plots mfcc
 def plot_mfcc(mfcc_frames):
+    print "\n Plotting mfcc with shape: ", mfcc_frames.shape
     plt.figure(figsize=(10, 4))
     librosa.display.specshow(mfcc_frames, x_axis='time')
+    print "librosa display... "
     plt.colorbar()
     plt.title('MFCC')
     plt.tight_layout()
     plt.interactive(False)
     plt.show()
-"""
