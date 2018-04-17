@@ -1,5 +1,5 @@
 from keras.callbacks import Callback
-# import itertools
+from itertools import groupby
 import numpy as np
 from text import wer, int_to_text_sequence, text_to_int_sequence
 # from keras import backend as K
@@ -15,47 +15,42 @@ class LossCallback(Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         if (epoch%5 == 0):
-            batch = 0
+            print "\n Epoch: ", epoch
+
+            batch = 2
             input, output = self.validation_gen.__getitem__(batch)
 
             x_data = input.get("the_input")
-            input_length = input.get("input_length")
+            y_data = input.get("the_labels")
+            print "\n##########"
+            print "Y TRUE: "
+            for i in y_data:
+                print "".join(int_to_text_sequence(i))
 
             # res = epoch_stats(self.test_func, x_data)
             # print "Res epoch stats: ", res
-            res = decode_batch(self.test_func, x_data, input_length)
-            # print "Res of decode batch: ", res
+            res = max_decode(self.test_func, x_data)
+            print "\nRES of max decode: ", res, "\nIn text: "
+            for i in res:
+                print "".join(int_to_text_sequence(i))
+            print "##########\n"
 
 
-# K.ctc_decode?
-# For a real OCR application, this should be beam search with a dictionary
-# and language model.  For this example, best path is sufficient.
-def decode_batch(test_func, x_data, input_length=0):
+def max_decode(test_func, x_data):
     y_pred = test_func([x_data])[0]
-    print "y_pred shape: ", y_pred.shape
-    print "y_pred 0 shape :", y_pred[0].shape
-    array = np.arange(y_pred[0].shape[0])
-    print "Array shape: ", array.shape
-    res0 = np.argmax(y_pred[4], axis=1)
-    res1 = np.argmax(y_pred[6], axis=1)
 
-    print "\nBatch0 maximum", res0
-    print "\nBatch1 maximum", res1
+    decoded = []
+    for i in range(0,y_pred.shape[0]):
 
-    # K.ctc_decode(y_pred, input_length, greedy=True, beam_width=100, top_paths=1)
-    # tuple = K.ctc_decode(y_pred, input_length)
-    # print "tuple [0][0] ", tuple[0][0]
-    # print "tuple [1][0] ", tuple[1][0]
+        decoded_batch = []
+        for j in range(0,y_pred.shape[1]):
+            decoded_batch.append(np.argmax(y_pred[i][j]))
 
+        temp = [k for k, g in groupby(decoded_batch)]
+        temp[:] = [x for x in temp if x != [28]]
+        decoded.append(temp)
 
-    # res = []
-    # for j in range(y_pred.shape[0]):
-    #    out_best = list(np.argmax(y_pred[j, 2:], 1))
-    #    out_best = [k for k, g in itertools.groupby(out_best)]
-    #    print "Pred in int: ", out_best
-    #    outstr = int_to_text_sequence(out_best)
-    #    res.append(outstr)
-    return res0
+    return decoded
 
 
 def epoch_stats(test_func, input):
