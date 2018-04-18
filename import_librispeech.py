@@ -220,7 +220,7 @@ def _convert_audio_and_split_sentences(extracted_dir, data_set, dest_dir):
                         copyfile(old_file, target_file)
                         # Transformer().build(old_file, target_file)
                     filesize = os.path.getsize(target_file)
-                    target_file_path = os.path.relpath(target_file)
+                    target_file_path = os.path.abspath(target_file)
                     files.append((target_file_path, filesize, transcript))
 
     return pandas.DataFrame(data=files, columns=["filename", "filesize", "transcript"])
