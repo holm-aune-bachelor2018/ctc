@@ -89,15 +89,15 @@ def _download_and_preprocess_data(data_dir):
     #  data_dir/LibriSpeech/split-wav/1-2-2.txt
     #  ...
     print("Moving files and splitting transcriptions...")
-    train_100 = _convert_audio_and_split_sentences(work_dir, "train-clean-100", "train-clean-100-wav")
-    train_360 = _convert_audio_and_split_sentences(work_dir, "train-clean-360", "train-clean-360-wav")
+    train_100 = _convert_audio_and_split_sentences(work_dir, "train-clean-100", "train-clean-100-new")
+    train_360 = _convert_audio_and_split_sentences(work_dir, "train-clean-360", "train-clean-360-new")
 
-    train_500 = _convert_audio_and_split_sentences(work_dir, "train-other-500", "train-other-500-wav")
+    train_500 = _convert_audio_and_split_sentences(work_dir, "train-other-500", "train-other-500-new")
 
-    dev_clean = _convert_audio_and_split_sentences(work_dir, "dev-clean", "dev-clean-wav")
-    dev_other = _convert_audio_and_split_sentences(work_dir, "dev-other", "dev-other-wav")
-    test_clean = _convert_audio_and_split_sentences(work_dir, "test-clean", "test-clean-wav")
-    test_other = _convert_audio_and_split_sentences(work_dir, "test-other", "test-other-wav")
+    dev_clean = _convert_audio_and_split_sentences(work_dir, "dev-clean", "dev-clean-new")
+    dev_other = _convert_audio_and_split_sentences(work_dir, "dev-other", "dev-other-new")
+    test_clean = _convert_audio_and_split_sentences(work_dir, "test-clean", "test-clean-new")
+    test_other = _convert_audio_and_split_sentences(work_dir, "test-other", "test-other-new")
 
 
     # Write sets to disk as CSV files
