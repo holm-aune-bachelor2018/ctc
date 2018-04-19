@@ -49,7 +49,12 @@ def wer(original, result):
     # Therefore we split the strings into words first:
     original = original.split()
     result = result.split()
-    return levenshtein(original, result) / float(len(original))
+    wer = levenshtein(original, result) / float(len(original))
+
+    if wer > 1.0:
+        return 1.0
+    else:
+        return wer
 
 
 def wers(originals, results):
@@ -66,11 +71,6 @@ def wers(originals, results):
         rate = wer(originals[i], results[i])
         mean = mean + rate
         rates.append(rate)
-
-    if (mean/float(count)) > 1.0:
-        print "originals: \n", originals
-        print "results: \n", results
-        print "rates: \n", rates
 
     return rates, mean / float(count)
 

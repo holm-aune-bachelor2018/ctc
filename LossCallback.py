@@ -10,35 +10,23 @@ class LossCallback(Callback):
         self.test_func = test_func
         self.validation_gen = validation_gen
 
-#    def on_train_begin(self, logs={}):
-
     def on_epoch_end(self, epoch, logs={}):
-        print "Calculating WER..."
         wers = self.calc_wer()
-        print " - epoch: ", epoch, " - average WER: ", wers[1]
-        print "wers... \n", wers[0]
+        print " - average WER: ", wers[1]
 
-        """
-        if (epoch%5 == 0):
-            print "\n Epoch: ", epoch
-            batch = 0
-            input, output = self.validation_gen.__getitem__(batch)
+    def on_train_end(self, logs={}):
+        print "\n - Training ended, prediction samples -"
+        batch = 6
+        input, output = self.validation_gen.__getitem__(batch)
 
-            x_data = input.get("the_input")
-            y_data = input.get("the_labels")
-            print "\n##########"
-            print "Y TRUE: "
-            for i in y_data:
-                print "".join(int_to_text_sequence(i))
+        x_data = input.get("the_input")
+        y_data = input.get("the_labels")
 
-            # res = epoch_stats(self.test_func, x_data)
-            # print "Res epoch stats: ", res
-            res = max_decode(self.test_func, x_data)
-            print "\nRES of max decode: ", res, "\nIn text: "
-            for i in res:
-                print "".join(int_to_text_sequence(i))
-            print "##########\n"
-        """
+        res = max_decode(self.test_func, x_data)
+        for i in range(y_data.shape[0]):
+            print "Original: ","".join(int_to_text_sequence(y_data[i]))
+            print "Predicted: ","".join(int_to_text_sequence(res[i])), "\n"
+
 
     def calc_wer(self):
         out_true=[]
@@ -75,14 +63,3 @@ def max_decode(test_func, x_data):
         decoded.append(temp)
 
     return decoded
-
-
-"""
-def epoch_stats(test_func, input):
-    y_pred = test_func([input])[0]
-    print "y prEd: ", y_pred.shape
-    y_orig = "abc"
-
-    res = wer(y_orig, y_pred)
-    return res
-"""

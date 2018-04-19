@@ -27,11 +27,10 @@ class DataGenerator(Sequence):
 
     def __len__(self):
         'Denotes the number of batches per epoch'
-        if self.epoch_length == 0:
-            epoch_length = int(np.floor(self.df.shape[0] / self.batch_size))
-        else :
-            epoch_length = self.epoch_length
-        return epoch_length
+        # epoch_length = 0
+        if (self.epoch_length == 0) | (self.epoch_length > int(np.floor(self.df.shape[0]/self.batch_size))):
+            self.epoch_length = int(np.floor(self.df.shape[0] / self.batch_size))
+        return self.epoch_length
 
     def __getitem__(self, index):
         """
