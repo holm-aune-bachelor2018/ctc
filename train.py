@@ -10,6 +10,7 @@ import data
 from DataGenerator import DataGenerator
 import keras.backend as K
 from LossCallback import LossCallback
+import tensorflow as tf
 
 
 # Preprocessing
@@ -65,7 +66,7 @@ metrics = []
 # loss function to compile model, actual CTC loss function defined as a lambda layer in model
 loss = {'ctc': lambda y_true, y_pred: y_pred}
 
-with K.device('/cpu:0'):
+with tf.device('/cpu:0'):
     model = nn_models.dnn_brnn(units, params.get('mfcc_features'), output_dim)
 
 parallel_model = multi_gpu_model(model, gpus=2)
