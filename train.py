@@ -1,8 +1,11 @@
+#!/home/anitakau/envs/tensorflow-workq/bin/python
 #!/Users/AnitaKristineAune/tensorflow-py2/bin/python
+
 
 import sys
 import nn_models
 from keras import optimizers
+from keras.utils import multi_gpu_model
 import data
 from DataGenerator import DataGenerator
 import keras.backend as K
@@ -10,8 +13,8 @@ from LossCallback import LossCallback
 
 
 # Preprocessing
-path = "data_dir/librivox-dev-clean.csv"
-path_validation = "data_dir/librivox-test-clean.csv"
+path = "/home/anitakau/ctc/data_dir/librivox-dev-clean.csv"
+path_validation = "/home/anitakau/ctc/data_dir/librivox-test-clean.csv"
 
 _, input_dataframe = data.combine_all_wavs_and_trans_from_csvs(path)
 _, validation_df = data.combine_all_wavs_and_trans_from_csvs(path_validation)
@@ -62,8 +65,12 @@ metrics = []
 # loss function to compile model, actual CTC loss function defined as a lambda layer in model
 loss = {'ctc': lambda y_true, y_pred: y_pred}
 
-model = nn_models.dnn_brnn(units, params.get('mfcc_features'), output_dim)
-model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
+with K.device('/cpu:0'):
+    model = nn_models.dnn_brnn(units, params.get('mfcc_features'), output_dim)
+
+parallel_model = multi_gpu_model(model, gpus=2)
+parallel_model.compile(loss=loss, optimizer=optimizer)
+#model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 model.summary()
 
 y_pred = model.get_layer('ctc').input[0]
@@ -74,10 +81,13 @@ test_func = K.function([input_data], [y_pred])
 loss_cb = LossCallback(test_func, validation_generator)
 
 # Train model on dataset
-model.fit_generator(generator=training_generator,
+parallel_model.fit_generator(generator=training_generator,
                     epochs=epochs,
                     verbose=1,
                     callbacks=[loss_cb],
-                    validation_data=validation_generator)
+                    validation_data=validation_generator,
+                    workers=1)
+
+model.save('model_saved')
 
 K.clear_session()
