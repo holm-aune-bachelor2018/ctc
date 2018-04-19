@@ -1,6 +1,4 @@
-#!/home/anitakau/envs/tensorflow-workq/bin/python
-#!/Users/AnitaKristineAune/tensorflow-py2/bin/python
-
+#!$HOME/envs/tensorflow-workq/bin/python
 
 import sys
 import nn_models
@@ -14,8 +12,8 @@ import tensorflow as tf
 
 
 # Preprocessing
-path = "/home/anitakau/ctc/data_dir/librivox-dev-clean.csv"
-path_validation = "/home/anitakau/ctc/data_dir/librivox-test-clean.csv"
+path = "$HOME/ctc/data_dir/librivox-dev-clean.csv"
+path_validation = "$HOME/ctc/data_dir/librivox-test-clean.csv"
 
 _, input_dataframe = data.combine_all_wavs_and_trans_from_csvs(path)
 _, validation_df = data.combine_all_wavs_and_trans_from_csvs(path_validation)
@@ -26,7 +24,7 @@ _, validation_df = data.combine_all_wavs_and_trans_from_csvs(path_validation)
 frequency = 16
 
 # Parameters for script
-# batch_size, mfcc_features, epoch_length, epochs, units
+# batch_size, mfcc_features, epoch_length, epochs, units, model_name
 
 batch_size = int(sys.argv[1])
 mfcc_features = int(sys.argv[2])
@@ -35,6 +33,7 @@ epoch_length = int(sys.argv[3])
 # Model specifications
 epochs = int(sys.argv[4])                           # Number of epochs
 units = int(sys.argv[5])                            # Number of hidden nodes
+model_name = sys.argv[6]                            # path to save model
 
 params = {'batch_size': batch_size,
           'frame_length': 20 * frequency,
@@ -71,7 +70,7 @@ with tf.device('/cpu:0'):
 
 parallel_model = multi_gpu_model(model, gpus=2)
 parallel_model.compile(loss=loss, optimizer=optimizer)
-#model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
+
 model.summary()
 
 y_pred = model.get_layer('ctc').input[0]
@@ -84,11 +83,11 @@ loss_cb = LossCallback(test_func, validation_generator)
 # Train model on dataset
 parallel_model.fit_generator(generator=training_generator,
                     epochs=epochs,
-                    verbose=1,
+                    verbose=2,
                     callbacks=[loss_cb],
                     validation_data=validation_generator,
                     workers=1)
 
-model.save('model_saved')
+model.save(model_name)
 
 K.clear_session()
