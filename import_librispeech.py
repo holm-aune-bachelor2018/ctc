@@ -68,7 +68,7 @@ def _download_and_preprocess_data(data_dir):
 
     _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "train-clean-100"), train_clean_100)
     _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "train-clean-360"), train_clean_360)
-#    _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "train-other-500"), train_other_500)
+    # _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "train-other-500"), train_other_500)
 
     _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "dev-clean"), dev_clean)
     _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "dev-other"), dev_other)
@@ -92,7 +92,7 @@ def _download_and_preprocess_data(data_dir):
     train_100 = _convert_audio_and_split_sentences(work_dir, "train-clean-100", "train-clean-100-new")
     train_360 = _convert_audio_and_split_sentences(work_dir, "train-clean-360", "train-clean-360-new")
 
-    train_500 = _convert_audio_and_split_sentences(work_dir, "train-other-500", "train-other-500-new")
+    # train_500 = _convert_audio_and_split_sentences(work_dir, "train-other-500", "train-other-500-new")
 
     dev_clean = _convert_audio_and_split_sentences(work_dir, "dev-clean", "dev-clean-new")
     dev_other = _convert_audio_and_split_sentences(work_dir, "dev-other", "dev-other-new")
@@ -103,7 +103,7 @@ def _download_and_preprocess_data(data_dir):
     # Write sets to disk as CSV files
     train_100.to_csv(os.path.join(data_dir, "librivox-train-clean-100.csv"), index=False)
     train_360.to_csv(os.path.join(data_dir, "librivox-train-clean-360.csv"), index=False)
-    train_500.to_csv(os.path.join(data_dir, "librivox-train-other-500.csv"), index=False)
+    # train_500.to_csv(os.path.join(data_dir, "librivox-train-other-500.csv"), index=False)
 
     dev_clean.to_csv(os.path.join(data_dir, "librivox-dev-clean.csv"), index=False)
     dev_other.to_csv(os.path.join(data_dir, "librivox-dev-other.csv"), index=False)
