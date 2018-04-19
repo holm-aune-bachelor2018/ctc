@@ -13,10 +13,8 @@ class LossCallback(Callback):
 #    def on_train_begin(self, logs={}):
 
     def on_epoch_end(self, epoch, logs={}):
-        print "Calculating WER..."
         wers = self.calc_wer()
-        print " - epoch: ", epoch, " - average WER: ", wers[1]
-        print "wers... \n", wers[0]
+        print " - average WER: ", wers[1]
 
         """
         if (epoch%5 == 0):
