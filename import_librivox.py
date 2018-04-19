@@ -26,7 +26,7 @@ def _download_and_preprocess_data(data_dir):
     with progressbar.ProgressBar(max_value=7, widget=progressbar.AdaptiveETA) as bar:
         TRAIN_CLEAN_100_URL = "http://www.openslr.org/resources/12/train-clean-100.tar.gz"
         TRAIN_CLEAN_360_URL = "http://www.openslr.org/resources/12/train-clean-360.tar.gz"
-        TRAIN_OTHER_500_URL = "http://www.openslr.org/resources/12/train-other-500.tar.gz"
+        # TRAIN_OTHER_500_URL = "http://www.openslr.org/resources/12/train-other-500.tar.gz"
 
         DEV_CLEAN_URL = "http://www.openslr.org/resources/12/dev-clean.tar.gz"
         DEV_OTHER_URL = "http://www.openslr.org/resources/12/dev-other.tar.gz"
@@ -39,7 +39,7 @@ def _download_and_preprocess_data(data_dir):
         bar.update(0)
         train_clean_360 = base.maybe_download(filename_of(TRAIN_CLEAN_360_URL), data_dir, TRAIN_CLEAN_360_URL)
         bar.update(1)
-        train_other_500 = base.maybe_download(filename_of(TRAIN_OTHER_500_URL), data_dir, TRAIN_OTHER_500_URL)
+        # train_other_500 = base.maybe_download(filename_of(TRAIN_OTHER_500_URL), data_dir, TRAIN_OTHER_500_URL)
         bar.update(2)
 
         dev_clean = base.maybe_download(filename_of(DEV_CLEAN_URL), data_dir, DEV_CLEAN_URL)
@@ -64,7 +64,7 @@ def _download_and_preprocess_data(data_dir):
         bar.update(0)
         _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "train-clean-360"), train_clean_360)
         bar.update(1)
-        _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "train-other-500"), train_other_500)
+        #_maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "train-other-500"), train_other_500)
         bar.update(2)
 
         _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "dev-clean"), dev_clean)
@@ -95,7 +95,7 @@ def _download_and_preprocess_data(data_dir):
         bar.update(0)
         train_360 = _convert_audio_and_split_sentences(work_dir, "train-clean-360", "train-clean-360-new")
         bar.update(1)
-        train_500 = _convert_audio_and_split_sentences(work_dir, "train-other-500", "train-other-500-new")
+        # train_500 = _convert_audio_and_split_sentences(work_dir, "train-other-500", "train-other-500-new")
         bar.update(2)
 
         dev_clean = _convert_audio_and_split_sentences(work_dir, "dev-clean", "dev-clean-new")
@@ -111,7 +111,7 @@ def _download_and_preprocess_data(data_dir):
     # Write sets to disk as CSV files
     train_100.to_csv(os.path.join(data_dir, "librivox-train-clean-100.csv"), index=False)
     train_360.to_csv(os.path.join(data_dir, "librivox-train-clean-360.csv"), index=False)
-    train_500.to_csv(os.path.join(data_dir, "librivox-train-other-500.csv"), index=False)
+    # train_500.to_csv(os.path.join(data_dir, "librivox-train-other-500.csv"), index=False)
 
     dev_clean.to_csv(os.path.join(data_dir, "librivox-dev-clean.csv"), index=False)
     dev_other.to_csv(os.path.join(data_dir, "librivox-dev-other.csv"), index=False)
