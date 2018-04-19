@@ -15,7 +15,9 @@ class LossCallback(Callback):
     def on_epoch_end(self, epoch, logs={}):
         print "Calculating WER..."
         wers = self.calc_wer()
-        print " - epoch: ", epoch, " - average WER: ", wers
+        print " - epoch: ", epoch, " - average WER: ", wers[1]
+        print "wers... \n", wers[0]
+
         """
         if (epoch%5 == 0):
             print "\n Epoch: ", epoch
@@ -55,7 +57,7 @@ class LossCallback(Callback):
 
         out = wers(out_true, out_pred)
 
-        return out[1]
+        return out
 
 
 def max_decode(test_func, x_data):

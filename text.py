@@ -34,10 +34,9 @@ def int_to_text_sequence(seq):
         text_sequence.append(ch)
     return text_sequence
 
+
 # Word error rate
 # Following code is adapted from github.com/mozilla/DeepSpeech
-
-
 def wer(original, result):
     r"""
     The WER is defined as the editing/Levenshtein distance on word level
@@ -67,6 +66,12 @@ def wers(originals, results):
         rate = wer(originals[i], results[i])
         mean = mean + rate
         rates.append(rate)
+
+    if (mean/float(count)) > 1.0:
+        print "originals: \n", originals
+        print "results: \n", results
+        print "rates: \n", rates
+
     return rates, mean / float(count)
 
 # The following code is from: http://hetland.org/coding/python/levenshtein.py
