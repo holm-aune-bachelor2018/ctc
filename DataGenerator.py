@@ -24,6 +24,7 @@ class DataGenerator(Sequence):
 
         # Initializing indexes
         self.indexes = np.arange(len(self.df))
+        self.n_mels = 40
 
     def __len__(self):
         'Denotes the number of batches per epoch'
@@ -126,7 +127,6 @@ class DataGenerator(Sequence):
         #    np.random.shuffle(self.indexes)
 
     def mfcc(self, frames, sr, max_pad_length):
-        # TODO: Normalize input (between 0 and 1? -1 and 1?)
         """
         Generates MFCC (mel frequency cepstral coefficients) and zero-pads with max_pad_length
         :param frames: path to wav-file
@@ -135,9 +135,8 @@ class DataGenerator(Sequence):
         :return: mfcc_frames: Padded 2d array with time_steps * input_dim (mfcc features)
                  x_length: length of sequence before padding (input for CTC)
         """
-
         mfcc_frames = librosa.feature.mfcc(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
-                                           n_mfcc=self.mfcc_features)
+                                           n_mfcc=self.mfcc_features, n_mels=self.n_mels)
 
         x_length = mfcc_frames.shape[1]
         mfcc_frames = pad_sequences(mfcc_frames, maxlen=max_pad_length, dtype='float',
@@ -148,7 +147,7 @@ class DataGenerator(Sequence):
 
     def get_seq_size(self, frame, sr):
         mfcc = librosa.feature.mfcc(frame, sr, n_fft=self.frame_length, hop_length=self.hop_length,
-                                    n_mfcc=self.mfcc_features)
+                                    n_mfcc=self.mfcc_features, n_mels=self.n_mels)
         return mfcc.shape[1]
 
 """
