@@ -60,9 +60,7 @@ validation_generator = DataGenerator(validation_df, **params)
 
 input_shape = (None, params.get('mfcc_features'))   # "None" to be able to process batches of any size
 output_dim = 29                                     # output dimension (n-1)
-
 eps = 1e-8                                          # epsilon 1e-8
-learning_rate = 0.001
 optimizer = optimizers.Adam(lr=learning_rate, epsilon=eps, clipnorm=2.0)
 
 calc_epoch_length = training_generator.__len__()
