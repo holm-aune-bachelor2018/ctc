@@ -99,10 +99,10 @@ parallel_model.fit_generator(generator=training_generator,
                              epochs=epochs,
                              verbose=2,
                              callbacks=[loss_cb],
-                             use_multiprocessing=True,
+                             # use_multiprocessing=True,
                              validation_data=validation_generator,
                              shuffle=shuffle,
-                             workers=6)
+                             workers=4)
 
 model.save(model_name)
 K.clear_session()
