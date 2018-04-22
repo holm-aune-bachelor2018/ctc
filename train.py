@@ -68,7 +68,7 @@ loss = {'ctc': lambda y_true, y_pred: y_pred}
 
 # Print training data at the beginning of training
 calc_epoch_length = training_generator.__len__()
-print "\n\n Model and training parameters: "
+print "\n\nModel and training parameters: "
 print "Starting time: ", datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 print " - epochs: ", epochs, "\n - batch size: ", batch_size, \
       "\n - input epoch length: ", input_epoch_length, "\n - network epoch length: ", calc_epoch_length, \
