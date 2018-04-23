@@ -49,7 +49,7 @@ def combine_all_wavs_and_trans_from_csvs(csvslist, sortagrad=True, createwordlis
 
     if delBigTranscripts:
         print("removing any sentences that are too big- tweetsize")
-        df_final = df_all[df_all['transcript'].map(len) <= 140]
+        df_final = df_all[df_all['transcript'].map(len) <= 280]
     else:
         df_final = df_all
 
