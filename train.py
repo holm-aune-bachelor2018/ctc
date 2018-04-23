@@ -22,7 +22,7 @@ ex_model_path = ""                                  # Path to existing model
 # Create training and validation dataframes
 print "\nReading training data:"
 _, input_dataframe = data.combine_all_wavs_and_trans_from_csvs(path)
-print "\n Reading validation data: "
+print "\nReading validation data: "
 _, validation_df = data.combine_all_wavs_and_trans_from_csvs(path_validation)
 
 # input_dataframe.to_csv('data.csv')
@@ -79,8 +79,23 @@ print " - epochs: ", epochs, "\n - batch size: ", batch_size, \
       "\n - hidden units: ", units, "\n - mfcc features: ", mfcc_features, "\n"
 
 
-with tf.device('/cpu:0'):
-    model = nn_models.dnn_brnn(units, params.get('mfcc_features'), output_dim)
+# Train model on dataset
+if(load_ex_model):
+    with tf.device('/cpu:0'):
+        model = models.load_model(ex_model_path, custom_objects={'clipped_relu': nn_models.clipped_relu})
+        print ("\nLoaded existing model at: ", ex_model_path)
+
+else:
+    with tf.device('/cpu:0'):
+        model = nn_models.dnn_brnn(units, params.get('mfcc_features'), output_dim)
+    print("\nDidn't load existing model\n")
+
+
+# Print model
+model.summary()
+parallel_model = multi_gpu_model(model, gpus=2)
+
+parallel_model.compile(loss=loss, optimizer=optimizer)
 
 # Creates a test function that takes sound input and outputs predictions
 # Used to calculate WER while training the network
@@ -91,21 +106,6 @@ test_func = K.function([input_data], [y_pred])
 # The loss callback function that calculates WER while training
 loss_cb = LossCallback(test_func, validation_generator)
 
-# Print model
-model.summary()
-
-# Train model on dataset
-if(load_ex_model):
-    model = models.load_model(ex_model_path, custom_objects={'clipped_relu': nn_models.clipped_relu})
-    parallel_model = multi_gpu_model(model, gpus=2)
-    print("Loaded existing model at: ", ex_model_path)
-
-else:
-    parallel_model = multi_gpu_model(model, gpus=2)
-    print("Didn't load existing model")
-
-
-parallel_model.compile(loss=loss, optimizer=optimizer)
 parallel_model.fit_generator(generator=training_generator,
                          epochs=epochs,
                          verbose=2,
