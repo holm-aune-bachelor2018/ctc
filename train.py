@@ -3,7 +3,7 @@
 
 import sys
 import nn_models
-from keras import optimizers
+from keras import optimizers, models
 from keras.utils import multi_gpu_model
 import data
 from DataGenerator import DataGenerator
@@ -15,6 +15,9 @@ from datetime import datetime
 # Path to training and testing/validation data
 path = "/home/<user>/ctc/data_dir/librivox-train-clean-100.csv"
 path_validation = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
+
+load_ex_model = True                                # Load existing model or not
+ex_model_path = ""                                  # Path to existing model
 
 # Create training and validation dataframes
 print "\nReading training data:"
@@ -79,12 +82,6 @@ print " - epochs: ", epochs, "\n - batch size: ", batch_size, \
 with tf.device('/cpu:0'):
     model = nn_models.dnn_brnn(units, params.get('mfcc_features'), output_dim)
 
-parallel_model = multi_gpu_model(model, gpus=2)
-parallel_model.compile(loss=loss, optimizer=optimizer)
-
-# Print model
-model.summary()
-
 # Creates a test function that takes sound input and outputs predictions
 # Used to calculate WER while training the network
 input_data = model.get_layer('the_input').input
@@ -94,8 +91,28 @@ test_func = K.function([input_data], [y_pred])
 # The loss callback function that calculates WER while training
 loss_cb = LossCallback(test_func, validation_generator)
 
+# Print model
+model.summary()
+
 # Train model on dataset
-parallel_model.fit_generator(generator=training_generator,
+if(load_ex_model):
+    parallel_model = multi_gpu_model(models.load_model(ex_model_path, custom_objects={'relu': 'clipped_relu'}), gpus=2)
+    print("Loaded existing model at: ", ex_model_path)
+
+    parallel_model.fit_generator(generator=training_generator,
+                                 epochs=epochs,
+                                 verbose=2,
+                                 callbacks=[loss_cb],
+                                 # use_multiprocessing=True,
+                                 validation_data=validation_generator,
+                                 shuffle=shuffle,
+                                 workers=4)
+else:
+    print("Didn't load existing model")
+
+    parallel_model = multi_gpu_model(model, gpus=2)
+    parallel_model.compile(loss=loss, optimizer=optimizer)
+    parallel_model.fit_generator(generator=training_generator,
                              epochs=epochs,
                              verbose=2,
                              callbacks=[loss_cb],
