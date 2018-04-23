@@ -2,10 +2,17 @@ from keras.callbacks import Callback
 from itertools import groupby
 import numpy as np
 from text import wers, int_to_text_sequence
-# from keras import backend as K
 
 
 class LossCallback(Callback):
+    """
+
+
+    Args:
+        test_func ( ):
+        validation_gen ( ):
+        
+    """
     def __init__(self, test_func, validation_gen):
         self.test_func = test_func
         self.validation_gen = validation_gen
