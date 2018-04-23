@@ -95,6 +95,8 @@ else:
 model.summary()
 parallel_model = multi_gpu_model(model, gpus=2)
 
+parallel_model.compile(loss=loss, optimizer=optimizer)
+
 # Creates a test function that takes sound input and outputs predictions
 # Used to calculate WER while training the network
 input_data = model.get_layer('the_input').input
@@ -104,8 +106,6 @@ test_func = K.function([input_data], [y_pred])
 # The loss callback function that calculates WER while training
 loss_cb = LossCallback(test_func, validation_generator)
 
-
-parallel_model.compile(loss=loss, optimizer=optimizer)
 parallel_model.fit_generator(generator=training_generator,
                          epochs=epochs,
                          verbose=2,
