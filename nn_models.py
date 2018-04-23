@@ -1,5 +1,5 @@
 from keras.models import Model
-from keras.layers import Dense, SimpleRNN, LSTM, Bidirectional, Masking, TimeDistributed, Lambda, Input, Dropout, BatchNormalization
+from keras.layers import Dense, SimpleRNN, LSTM, Bidirectional, Masking, TimeDistributed, Lambda, Input, Dropout
 from keras import backend as K
 
 
@@ -42,12 +42,10 @@ def dnn_brnn(units, input_dim=26, output_dim=29):
     # TODO: mergemode? default = concat, kernel_initializer? bias_initializer?
     # Bidirectional RNN (with ReLu ?)
     # x = BatchNormalization()(x)
-    x = Bidirectional(SimpleRNN(units, name='bi_rnn1', activation='relu', return_sequences=True),
-                      merge_mode='concat', name='bi_rnn')(x)
+    x = Bidirectional(SimpleRNN(units, activation='relu', return_sequences=True), merge_mode='concat', name='bi_rnn')(x)
 
     # 1 fully connected relu layer + softmax
-    inner = TimeDistributed(Dense(units=units, name='fc4', kernel_initializer='random_normal', activation='relu'),
-                            name='fc_4')(x)
+    inner = TimeDistributed(Dense(units=units, kernel_initializer='random_normal', activation='relu'), name='fc_4')(x)
 
     # Output layer
     y_pred = TimeDistributed(Dense(units=output_dim, name='softmax', activation='softmax'), name='softmax')(inner)
@@ -104,8 +102,7 @@ def dnn_lstm(units, input_dim=26, output_dim=29):
     # TODO: mergemode? default = concat, kernel_initializer? bias_initializer?
     # Bidirectional RNN (with ReLu ?)
     # x = BatchNormalization()(x)
-    x = Bidirectional(LSTM(units, name='bi_LSTM', activation='relu', return_sequences=True),
-                      merge_mode='concat', name='bi_rnn')(x)
+    x = Bidirectional(LSTM(units, activation='relu', return_sequences=True), merge_mode='concat', name='bi_LSTM')(x)
 
     # 1 fully connected relu layer + softmax
     inner = TimeDistributed(Dense(units=units, name='fc4', kernel_initializer='random_normal', activation='relu'),
