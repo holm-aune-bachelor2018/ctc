@@ -35,7 +35,7 @@ def dnn_brnn(units, input_dim=26, output_dim=29, dropout=0.2):
     x = Masking(mask_value=0.)(input_data)
 
     # 3 fully connected layers DNN ReLu
-    # Dropout rate 10 % at each FC layer
+    # Dropout rate 20 % at each FC layer
 
     x = TimeDistributed(Dropout(dropout), name='dropout_1')(x)
     x = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense,  bias_initializer=bias_init_dense,
