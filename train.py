@@ -44,6 +44,7 @@ model_name = sys.argv[7]                            # path to save model
 # Sampling rate of data in khz (LibriSpeech is 16khz)
 frequency = 16
 shuffle = True
+dropout = 0.2
 
 # Data generation parameters
 params = {'batch_size': batch_size,
@@ -76,19 +77,19 @@ print "Starting time: ", datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 print " - epochs: ", epochs, "\n - batch size: ", batch_size, \
       "\n - input epoch length: ", input_epoch_length, "\n - network epoch length: ", calc_epoch_length, \
       "\n - training on ",calc_epoch_length*batch_size," files","\n - learning rate: ", learning_rate,\
-      "\n - hidden units: ", units, "\n - mfcc features: ", mfcc_features, "\n"
+      "\n - hidden units: ", units, "\n - mfcc features: ", mfcc_features, "\n - dropout: ", dropout, "\n"
 
 
 # Train model on dataset
-if(load_ex_model):
+if load_ex_model:
     with tf.device('/cpu:0'):
         model = models.load_model(ex_model_path, custom_objects={'clipped_relu': nn_models.clipped_relu})
         print ("\nLoaded existing model at: ", ex_model_path)
 
 else:
     with tf.device('/cpu:0'):
-        model = nn_models.dnn_brnn(units, params.get('mfcc_features'), output_dim)
-    print("\nDidn't load existing model\n")
+        model = nn_models.dnn_brnn(units, params.get('mfcc_features'), output_dim, dropout=dropout)
+        print("\nDidn't load existing model\n")
 
 
 # Print model
@@ -107,13 +108,13 @@ test_func = K.function([input_data], [y_pred])
 loss_cb = LossCallback(test_func, validation_generator)
 
 parallel_model.fit_generator(generator=training_generator,
-                         epochs=epochs,
-                         verbose=2,
-                         callbacks=[loss_cb],
-                         # use_multiprocessing=True,
-                         validation_data=validation_generator,
-                         shuffle=shuffle,
-                         workers=4)
+                             epochs=epochs,
+                             verbose=2,
+                             callbacks=[loss_cb],
+                             validation_data=validation_generator,
+                             workers=8,
+                             # max_queue_size=12,
+                             shuffle=shuffle)
 
 model.save(model_name)
 K.clear_session()
