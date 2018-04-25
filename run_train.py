@@ -17,10 +17,8 @@ import argparse
 def main(args):
     # Path to training and testing/validation data
 
-    path = "data_dir/librivox-dev-clean.csv"
-    path_validation = "data_dir/librivox-test-clean.csv"
-    #path = "/home/<user>/ctc/data_dir/librivox-dev-clean-100.csv"
-    #path_validation = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
+    path = "/home/<user>/ctc/data_dir/librivox-dev-clean-100.csv"
+    path_validation = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
 
     # Load existing model or not, and path to existing model
     load_ex_model = False
@@ -46,17 +44,6 @@ def main(args):
     learning_rate = args.lr
     model_name = args.model_name
 
-    '''
-    batch_size = int(sys.argv[1])                       # Number of files in one batch
-    mfcc_features = int(sys.argv[2])                    # Number of mfcc features (per frame) to extract
-    input_epoch_length = int(sys.argv[3])               # Number of batches per epoch (if 0, trains on full dataset)
-    epochs = int(sys.argv[4])                           # Number of epochs
-
-    # Model specifications
-    units = int(sys.argv[5])                            # Number of hidden nodes
-    learning_rate = float(sys.argv[6])                  # Learning rate
-    model_name = sys.argv[7]                            # path to save model
-    '''
     # Sampling rate of data in khz (LibriSpeech is 16khz)
     frequency = 16
     shuffle = True
@@ -108,9 +95,9 @@ def main(args):
 
     # Print model
     model.summary()
-    #parallel_model = multi_gpu_model(model, gpus=2)
-    #parallel_model.compile(loss=loss, optimizer=optimizer)
-    model.compile(loss=loss, optimizer=optimizer)
+    parallel_model = multi_gpu_model(model, gpus=2)
+    parallel_model.compile(loss=loss, optimizer=optimizer)
+
     # Creates a test function that takes sound input and outputs predictions
     # Used to calculate WER while training the network
     input_data = model.get_layer('the_input').input
@@ -120,7 +107,7 @@ def main(args):
     # The loss callback function that calculates WER while training
     loss_cb = LossCallback(test_func, validation_generator)
 
-    model.fit_generator(generator=training_generator,
+    parallel_model.fit_generator(generator=training_generator,
                                  epochs=epochs,
                                  verbose=2,
                                  callbacks=[loss_cb],
@@ -133,7 +120,7 @@ def main(args):
         model.save(model_name)
 
     K.clear_session()
-    
+
     print "Ending time: ", datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
