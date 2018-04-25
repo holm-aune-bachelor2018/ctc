@@ -22,7 +22,7 @@ class DataGenerator(Sequence):
         batch_size (int): size of each batch
         frame_length (int): size of each frame (samples per frame)
         hop_length (int): how far to move center of each frame when splitting audio time series
-        mfcc_features (int): how many mfcc-features to extract for each frame
+        mfcc_features (int, default=26): how many mfcc-features to extract for each frame
         epoch_length (int, default=0): the number of batches in each epoch, if set to zero it uses all available data
         shuffle (boolean, default=True): whether to shuffle the indexes in each batch
 
@@ -32,9 +32,9 @@ class DataGenerator(Sequence):
         See https://keras.io/utils/ - Sequence for more details on using Sequence
 
     """
-    n_mels = 40  # mel-filterbanks per frame
+    n_mels = 40  # mel bands per filterbank
 
-    def __init__(self, df, batch_size, frame_length, hop_length, mfcc_features, epoch_length=0, shuffle=True):
+    def __init__(self, df, batch_size, frame_length, hop_length, mfcc_features=26, epoch_length=0, shuffle=True):
         self.df = df.copy()
         self.batch_size = batch_size
         self.frame_length = frame_length
@@ -71,68 +71,26 @@ class DataGenerator(Sequence):
             }
         """
 
-        # Generate indexes of the batch
+        # Generate indexes of current batch
         indexes_in_batch = self.indexes[batch_index * self.batch_size:(batch_index + 1) * self.batch_size]
 
-        # Shuffle indexes in batch
-        if (self.shuffle):
+        # Shuffle indexes within current batch if shuffle=true
+        if self.shuffle:
             shuf(indexes_in_batch)
 
-        # Initializing vectors
-        x_data_raw = []
-        y_data_unpadded = []
-        len_y_seq = []
-        len_x_seq = []
-        sr = 0
+        # Load audio and transcripts
+        x_data_raw, y_data_raw, sr = self.load_audio(indexes_in_batch)
 
-        # loads wav-files and transcripts
-        for i in indexes_in_batch:
-            # Read sound data
-            path = self.df.iloc[i]['filename']
-            frames, sr = sf.read(path)
-            x_data_raw.append(frames)
+        # Preprocess and pad data
+        x_data, input_length = self.extract_mfcc_and_pad(x_data_raw, sr)
+        y_data, label_length = convert_and_pad_transcripts(y_data_raw)
 
-            # Read transcript data
-            y_txt = self.df.iloc[i]['transcript']
-            y_int = data.text_to_int_sequence(y_txt)
-            y_data_unpadded.append(y_int)
-
-            # Save length of transcripts for the CTC
-            len_y_seq.append(len(y_int))
-
-        # Finds longest frame in batch for padding
-        max_x_length = self.get_seq_size(max(x_data_raw, key=len), sr)
-        x_data = np.empty([0, max_x_length, self.mfcc_features])
-
-        # Extract mfcc features and pad so every frame-sequence is equal length
-        for i in range (0,len(x_data_raw)):
-            x, x_len = self.mfcc(x_data_raw[i], sr, max_x_length)
-            x_data = np.insert(x_data, i, x, axis=0)
-            len_x_seq.append(x_len - 2)     # -2 because ctc discards the first two outputs of the rnn network
-
-        # Finds longest sequence in y for padding
-        max_y_length = len(max(y_data_unpadded, key=len))
-        y_data = np.empty([0, max_y_length])
-
-        # Pads every sequence in y to be equal length
-        for i in range(0, len(y_data_unpadded)):
-            y = y_data_unpadded[i]
-
-            for j in range(len(y), max_y_length):
-                y.append(0)
-
-            y_data = np.insert(y_data, i, y, axis=0)
-
-        # Convert to numpy array
-        input_length = np.array(len_x_seq)  # batch_size * 1
-        label_length = np.array(len_y_seq)  # batch_size * 1
-
-        # print "x_data shape: ", x_data.shape
+        # print "\nx_data shape: ", x_data.shape
         # print "y_data shape: ", y_data.shape
         # print "input_length shape: ", input_length.shape
         # print "label_length shape: ", label_length.shape
         # print "input length: ", input_length
-        # print "label_length: ", label_length
+        # print "label_length: ", label_length, "\n"
 
         inputs = {'the_input': x_data,
                   'the_labels': y_data,
@@ -142,6 +100,42 @@ class DataGenerator(Sequence):
         outputs = {'ctc': np.zeros([self.batch_size])} # dummy data for dummy loss function
 
         return inputs, outputs
+
+    def load_audio(self, indexes_in_batch):
+        sr = 0
+        x_data_raw = []
+        y_data_raw = []
+
+        # loads wav-files and transcripts
+        for i in indexes_in_batch:
+
+            # Read sound data
+            path = self.df.iloc[i]['filename']
+            frames, sr = sf.read(path)
+            x_data_raw.append(frames)
+
+            # Read transcript data
+            y_txt = self.df.iloc[i]['transcript']
+            y_data_raw.append(y_txt)
+
+        return x_data_raw, y_data_raw, sr
+
+    def extract_mfcc_and_pad(self, x_data_raw, sr):
+
+        # Finds longest frame in batch for padding
+        max_x_length = self.get_seq_size(max(x_data_raw, key=len), sr)
+        x_data = np.empty([0, max_x_length, self.mfcc_features])
+        len_x_seq = []
+
+        # Extract mfcc features and pad so every frame-sequence is equal max_x_length
+        for i in range(0, len(x_data_raw)):
+            x, x_len = self.mfcc(x_data_raw[i], sr, max_x_length)
+            x_data = np.insert(x_data, i, x, axis=0)
+            len_x_seq.append(x_len - 2)  # -2 because ctc discards the first two outputs of the rnn network
+
+        # Convert input length list to numpy array
+        input_length = np.array(len_x_seq)
+        return x_data, input_length
 
     def mfcc(self, frames, sr, max_pad_length):
         """
@@ -181,6 +175,29 @@ class DataGenerator(Sequence):
         mfcc_frames = mfcc(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
                            n_mfcc=self.mfcc_features, n_mels=self.n_mels)
         return mfcc_frames.shape[1]
+
+
+def convert_and_pad_transcripts(y_data_raw):
+    # Finds longest sequence in y for padding
+    max_y_length = len(max(y_data_raw, key=len))
+
+    y_data = np.empty([0, max_y_length])
+    len_y_seq = []
+
+    # Converts to int and pads to be equal max_y_length
+    for i in range(0, len(y_data_raw)):
+        y_int = data.text_to_int_sequence(y_data_raw[i])
+        len_y_seq.append(len(y_int))
+
+        for j in range(len(y_int), max_y_length):
+            y_int.append(0)
+
+        y_data = np.insert(y_data, i, y_int, axis=0)
+
+    # Convert transcript length list to numpy array
+    label_length = np.array(len_y_seq)
+
+    return y_data, label_length
 
 """
 # Plots mfcc
