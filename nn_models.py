@@ -69,7 +69,8 @@ def dnn_brnn(units, input_dim=26, output_dim=29, dropout=0.2):
     label_length = Input(name='label_length', shape=[1], dtype=dtype)   # unpadded len of all y_sequences in batch
 
     # Lambda layer with ctc_loss function due to Keras not supporting CTC layers
-    loss_out = Lambda(function=ctc_lambda_func, name='ctc', output_shape=(1,))([y_pred, labels, input_length, label_length])
+    loss_out = Lambda(function=ctc_lambda_func, name='ctc', output_shape=(1,))\
+        ([y_pred, labels, input_length, label_length])
 
     model = Model(inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
 
@@ -122,8 +123,8 @@ def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2):
                               activation=clipped_relu), name='fc_3')(x)
 
     # Bidirectional RNN (with ReLu)
-    x = Bidirectional(SimpleRNN(units, activation='relu', kernel_initializer=kernel_init_rnn,
-                                bias_initializer=bias_init_rnn, return_sequences=True),
+    x = Bidirectional(LSTM(units, activation='relu', kernel_initializer=kernel_init_rnn,
+                                bias_initializer=bias_init_rnn, unit_forget_bias=True, return_sequences=True),
                       merge_mode='concat', name='bi_rnn')(x)
 
     # 1 fully connected relu layer + softmax
