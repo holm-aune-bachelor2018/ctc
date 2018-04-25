@@ -1,9 +1,8 @@
 # !/home/anitakau/envs/tensorflow-workq/bin/python
 # !/home/marith1/envs/tensorflow/bin/python
 
-import sys
 import nn_models
-from keras import optimizers, models
+from keras import optimizers, models, callbacks
 from keras.utils import multi_gpu_model
 import data
 from DataGenerator import DataGenerator
@@ -29,9 +28,6 @@ def main(args):
     _, input_dataframe = data.combine_all_wavs_and_trans_from_csvs(path)
     print "\nReading validation data: "
     _, validation_df = data.combine_all_wavs_and_trans_from_csvs(path_validation)
-
-    # input_dataframe.to_csv('data.csv')
-    # validation_df.to_csv('valid_data.csv')
 
     # Parameters for script
     # batch_size, mfcc_features, epoch_length, epochs, units, learning_rate, model_name
@@ -106,13 +102,14 @@ def main(args):
 
     # The loss callback function that calculates WER while training
     loss_cb = LossCallback(test_func, validation_generator)
+    checkpoint = callbacks.ModelCheckpoint(filepath=model_name, period=2)
 
     parallel_model.fit_generator(generator=training_generator,
                                  epochs=epochs,
                                  verbose=2,
-                                 callbacks=[loss_cb],
+                                 callbacks=[loss_cb, checkpoint],
                                  validation_data=validation_generator,
-                                 workers=8,
+                                 workers=1,
                                  # max_queue_size=12,
                                  shuffle=shuffle)
 
