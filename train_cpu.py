@@ -18,10 +18,6 @@ def main(args):
     path = "/home/<user>/ctc/data_dir/librivox-dev-clean-100.csv"
     path_validation = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
 
-    # Load existing model or not, and path to existing model
-    load_ex_model = False
-    ex_model_path = ""
-
     # Create training and validation dataframes
     print "\nReading training data:"
     _, input_dataframe = data.combine_all_wavs_and_trans_from_csvs(path)
@@ -38,7 +34,8 @@ def main(args):
     epochs = args.epochs
     units = args.units
     learning_rate = args.lr
-    model_name = args.model_name
+    save_model = args.save_model
+    load_model = args.load_model
 
     # Sampling rate of data in khz (LibriSpeech is 16khz)
     frequency = 16
@@ -79,9 +76,9 @@ def main(args):
         "\n - hidden units: ", units, "\n - mfcc features: ", mfcc_features, "\n - dropout: ", dropout, "\n"
 
     # Train model on dataset
-    if load_ex_model:
-        model = models.load_model(ex_model_path, custom_objects={'clipped_relu': nn_models.clipped_relu})
-        print ("\nLoaded existing model at: ", ex_model_path)
+    if load_model:
+        model = models.load_model(load_model, custom_objects={'clipped_relu': nn_models.clipped_relu})
+        print ("\nLoaded existing model at: ", load_model)
 
     else:
         model = nn_models.dnn_brnn(units, params.get('mfcc_features'), output_dim, dropout=dropout)
@@ -109,8 +106,8 @@ def main(args):
                                  # max_queue_size=12,
                                  shuffle=shuffle)
 
-    if args.model_name:
-        model.save(model_name)
+    if args.save_model:
+        model.save(save_model)
 
     K.clear_session()
 
@@ -126,7 +123,8 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=1, help='Number of epochs')
     parser.add_argument('--units', type=int, default=64, help='Number of hidden nodes')
     parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
-    parser.add_argument('--model_name', type=str, help='path to save model')
+    parser.add_argument('--save_model', type=str, help='Path to save model. If empty, no model is saved')
+    parser.add_argument('--load_model', type=str, help='Path to load existing model. If empty, no model is loaded')
 
     args = parser.parse_args()
 
