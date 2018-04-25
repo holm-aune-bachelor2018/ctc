@@ -44,7 +44,8 @@ def main(args):
     frequency = 16
     shuffle = True
     dropout = 0.2
-
+    checkpoint_period = 10
+    
     # Data generation parameters
     params = {'batch_size': batch_size,
               'frame_length': 20 * frequency,
@@ -102,7 +103,7 @@ def main(args):
 
     # The loss callback function that calculates WER while training
     loss_cb = LossCallback(test_func, validation_generator)
-    checkpoint = callbacks.ModelCheckpoint(filepath=model_name, period=2)
+    checkpoint = callbacks.ModelCheckpoint(filepath=model_name, period=checkpoint_period)
 
     parallel_model.fit_generator(generator=training_generator,
                                  epochs=epochs,
