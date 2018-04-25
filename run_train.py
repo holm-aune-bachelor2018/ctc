@@ -16,13 +16,15 @@ import argparse
 
 def main(args):
     # Path to training and testing/validation data
-    path = "ctc/data_dir/librivox-dev-clean.csv"
-    path_validation = "ctc/data_dir/librivox-test-clean.csv"
-    # path = "/home/<user>/ctc/data_dir/librivox-dev-clean-100.csv"
-    # path_validation = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
 
-    load_ex_model = False  # Load existing model or not
-    ex_model_path = ""  # Path to existing model
+    path = "data_dir/librivox-dev-clean.csv"
+    path_validation = "data_dir/librivox-test-clean.csv"
+    #path = "/home/<user>/ctc/data_dir/librivox-dev-clean-100.csv"
+    #path_validation = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
+
+    # Load existing model or not, and path to existing model
+    load_ex_model = False
+    ex_model_path = ""
 
     # Create training and validation dataframes
     print "\nReading training data:"
@@ -36,25 +38,13 @@ def main(args):
     # Parameters for script
     # batch_size, mfcc_features, epoch_length, epochs, units, learning_rate, model_name
 
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--batchsize', type=int, default=0, help='Number of files in one batch')
-    parser.add_argument('--mfccs', type=int, default=26, help='Number of mfcc features per frame to extract')
-    parser.add_argument('--in_el', type=int, default=0, help='Number of batches per epoch. 0 trains on full dataset')
-    parser.add_argument('--epochs', type=int, default=1, help='Number of epochs')
-    parser.add_argument('--units', type=int, default=512, help='Number of hidden nodes')
-    parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
-    # parser.add_argument('--model_name', type=str, default='$HOME/model_file', help='path to save model')
-
-    args = parser.parse_args()
-
     batch_size = args.batchsize
     mfcc_features = args.mfccs
     input_epoch_length = args.in_el
     epochs = args.epochs
     units = args.units
     learning_rate = args.lr
-    # model_name = args.model_name
+    model_name = args.model_name
 
     '''
     batch_size = int(sys.argv[1])                       # Number of files in one batch
@@ -118,10 +108,9 @@ def main(args):
 
     # Print model
     model.summary()
-    parallel_model = multi_gpu_model(model, gpus=2)
-
-    parallel_model.compile(loss=loss, optimizer=optimizer)
-
+    #parallel_model = multi_gpu_model(model, gpus=2)
+    #parallel_model.compile(loss=loss, optimizer=optimizer)
+    model.compile(loss=loss, optimizer=optimizer)
     # Creates a test function that takes sound input and outputs predictions
     # Used to calculate WER while training the network
     input_data = model.get_layer('the_input').input
@@ -131,7 +120,7 @@ def main(args):
     # The loss callback function that calculates WER while training
     loss_cb = LossCallback(test_func, validation_generator)
 
-    parallel_model.fit_generator(generator=training_generator,
+    model.fit_generator(generator=training_generator,
                                  epochs=epochs,
                                  verbose=2,
                                  callbacks=[loss_cb],
@@ -140,8 +129,26 @@ def main(args):
                                  # max_queue_size=12,
                                  shuffle=shuffle)
 
-    # model.save(model_name)
+    if args.model_name:
+        model.save(model_name)
+
     K.clear_session()
+    
     print "Ending time: ", datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--batchsize', type=int, default=10, help='Number of files in one batch')
+    parser.add_argument('--mfccs', type=int, default=26, help='Number of mfcc features per frame to extract')
+    parser.add_argument('--in_el', type=int, default=24, help='Number of batches per epoch. 0 trains on full dataset')
+    parser.add_argument('--epochs', type=int, default=1, help='Number of epochs')
+    parser.add_argument('--units', type=int, default=64, help='Number of hidden nodes')
+    parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
+    parser.add_argument('--model_name', type=str, help='path to save model')
+
+    args = parser.parse_args()
+
+    print "args: ", args
     main(args)
