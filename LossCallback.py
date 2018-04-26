@@ -2,6 +2,7 @@ from keras.callbacks import Callback
 from itertools import groupby
 import numpy as np
 from text import wers, int_to_text_sequence
+from utils import save_model
 
 
 class LossCallback(Callback):
@@ -25,7 +26,8 @@ class LossCallback(Callback):
         print " - average WER: ", wers[1]
 
         if ((epoch+1) % self.checkpoint)==0:
-            self.model.save(self.path_to_save)
+            #self.model.save(self.path_to_save)
+            save_model(self.model, self.path_to_save)
 
 
     def on_train_end(self, logs={}):
