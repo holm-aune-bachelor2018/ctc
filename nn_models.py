@@ -133,7 +133,7 @@ def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2):
 
     # Output layer with softmax
     y_pred = TimeDistributed(Dense(units=output_dim, kernel_initializer=kernel_init_dense,
-                                   bias_initializer=bias_init_dense,bactivation='softmax'), name='softmax')(inner)
+                                   bias_initializer=bias_init_dense, activation='softmax'), name='softmax')(inner)
 
     ###### CTC ####
     # y_input layers (transcription data) for CTC loss
