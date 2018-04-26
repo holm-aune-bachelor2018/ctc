@@ -13,9 +13,9 @@ def dnn_brnn(units, input_dim=26, output_dim=29, dropout=0.2):
 
     Model contains:
      1 layer of masking
-     3 layers of fully connected clipped ReLu (DNN) with dropout 10 % between each layer
+     3 layers of fully connected clipped ReLu (DNN) with dropout 20 % between each layer
      1 layer of BRNN
-     1 layer of ReLu
+     1 layers of fully connected clipped ReLu (DNN) with dropout 20 % between each layer
      1 layer of softmax
     """
 
@@ -54,13 +54,13 @@ def dnn_brnn(units, input_dim=26, output_dim=29, dropout=0.2):
                                 bias_initializer=bias_init_rnn, return_sequences=True),
                       merge_mode='concat', name='bi_rnn')(x)
 
-    # 1 fully connected relu layer + softmax
+    # 1 fully connected relu layer
     inner = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
                                   activation='relu'), name='fc_4')(x)
 
-    # Output layer
-    y_pred = TimeDistributed(Dense(units=output_dim, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
-                                   activation='softmax'), name='softmax')(inner)
+    # Output layer with softmax
+    y_pred = TimeDistributed(Dense(units=output_dim, kernel_initializer=kernel_init_dense,
+                                   bias_initializer=bias_init_dense, activation='softmax'), name='softmax')(inner)
 
     ###### CTC ####
     # y_input layers (transcription data) for CTC loss
@@ -86,9 +86,9 @@ def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2):
 
         Model contains:
          1 layer of masking
-         3 layers of fully connected clipped ReLu (DNN) with dropout 10 % between each layer
-         1 layer of BRNN
-         1 layer of ReLu
+         3 layers of fully connected clipped ReLu (DNN) with dropout 20 % between each layer
+         1 layer of BLSTM
+         1 layers of fully connected clipped ReLu (DNN) with dropout 20 % between each layer
          1 layer of softmax
         """
 
@@ -98,7 +98,7 @@ def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2):
     bias_init_dense = 'random_normal'
 
     # kernel and bias initializers for recurrent layer
-    kernel_init_rnn = 'glorot_uniform'
+    kernel_init_rnn = 'he_uniform'
     bias_init_rnn = 'zeros'
 
     # x_input layer, dim: (batch_size * x_seq_size * mfcc_features)
@@ -124,16 +124,16 @@ def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2):
 
     # Bidirectional RNN (with ReLu)
     x = Bidirectional(LSTM(units, activation='relu', kernel_initializer=kernel_init_rnn,
-                                bias_initializer=bias_init_rnn, unit_forget_bias=True, return_sequences=True),
-                      merge_mode='concat', name='bi_rnn')(x)
+                           bias_initializer=bias_init_rnn, unit_forget_bias=True, return_sequences=True),
+                      merge_mode='concat', name='bi_lstm')(x)
 
     # 1 fully connected relu layer + softmax
     inner = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
                                   activation='relu'), name='fc_4')(x)
 
-    # Output layer
-    y_pred = TimeDistributed(Dense(units=output_dim, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
-                                   activation='softmax'), name='softmax')(inner)
+    # Output layer with softmax
+    y_pred = TimeDistributed(Dense(units=output_dim, kernel_initializer=kernel_init_dense,
+                                   bias_initializer=bias_init_dense,bactivation='softmax'), name='softmax')(inner)
 
     ###### CTC ####
     # y_input layers (transcription data) for CTC loss
