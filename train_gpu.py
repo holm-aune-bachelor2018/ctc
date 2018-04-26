@@ -45,7 +45,7 @@ def main(args):
     shuffle = True
     dropout = 0.2
     checkpoint_period = 10
-    
+
     # Data generation parameters
     params = {'batch_size': batch_size,
               'frame_length': 20 * frequency,
@@ -102,13 +102,13 @@ def main(args):
     test_func = K.function([input_data], [y_pred])
 
     # The loss callback function that calculates WER while training
-    loss_cb = LossCallback(test_func, validation_generator)
-    checkpoint = callbacks.ModelCheckpoint(filepath=model_name, period=checkpoint_period)
+    loss_cb = LossCallback(test_func, validation_generator, model, checkpoint=checkpoint_period, path_to_save=model_name)
+    # checkpoint = callbacks.ModelCheckpoint(filepath=model_name, period=checkpoint_period)
 
     parallel_model.fit_generator(generator=training_generator,
                                  epochs=epochs,
                                  verbose=2,
-                                 callbacks=[loss_cb, checkpoint],
+                                 callbacks=[loss_cb],
                                  validation_data=validation_generator,
                                  workers=1,
                                  # max_queue_size=12,

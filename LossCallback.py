@@ -11,15 +11,22 @@ class LossCallback(Callback):
     Args:
         test_func ( ):
         validation_gen ( ):
-        
+
     """
-    def __init__(self, test_func, validation_gen):
+    def __init__(self, test_func, validation_gen, model, checkpoint, path_to_save):
         self.test_func = test_func
         self.validation_gen = validation_gen
+        self.model = model
+        self.checkpoint = checkpoint
+        self.path_to_save = path_to_save
 
     def on_epoch_end(self, epoch, logs={}):
         wers = self.calc_wer()
         print " - average WER: ", wers[1]
+
+        if ((epoch+1) % self.checkpoint)==0:
+            self.model.save(self.path_to_save)
+
 
     def on_train_end(self, logs={}):
         print "\n - Training ended, prediction samples -"
@@ -34,7 +41,6 @@ class LossCallback(Callback):
             print "Original: ","".join(int_to_text_sequence(y_data[i]))
             print "Predicted: ","".join(int_to_text_sequence(res[i])), "\n"
 
-
     def calc_wer(self):
         out_true=[]
         out_pred=[]
@@ -44,7 +50,7 @@ class LossCallback(Callback):
             y_data = input.get("the_labels")
 
             for i in y_data:
-                 out_true.append("".join(int_to_text_sequence(i)))
+                out_true.append("".join(int_to_text_sequence(i)))
 
             decoded = max_decode(self.test_func, x_data)
             for i in decoded:
