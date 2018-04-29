@@ -4,7 +4,6 @@
 import nn_models
 from keras import models
 from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint
 from data import combine_all_wavs_and_trans_from_csvs
 from DataGenerator import DataGenerator
 import keras.backend as K
@@ -15,7 +14,6 @@ import argparse
 
 def main(args):
     # Path to training and testing/validation data
-
     path = "/home/<user>/ctc/data_dir/librivox-train-clean-100.csv"
     path_validation = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
 
@@ -36,12 +34,12 @@ def main(args):
     model_type = args.model_type
     model_name = args.model_name
     model_load = args.model_load
-
-    # Sampling rate of data in khz (LibriSpeech is 16khz)
-    frequency = 16
     shuffle = True
     dropout = 0.2
     checkpoint = 10
+
+    # Sampling rate of data in khz (LibriSpeech is 16khz)
+    frequency = 16
 
     # Data generation parameters
     params = {'batch_size': batch_size,
@@ -56,8 +54,7 @@ def main(args):
     training_generator = DataGenerator(input_dataframe, **params)
     validation_generator = DataGenerator(validation_df, **params)
 
-    # Model input and output shape
-    input_shape = (None, params.get('mfcc_features'))  # "None" to be able to process batches of any size
+    # Model output shape
     output_dim = 29  # Output dim: features to predict + 1 for the CTC blank prediction
 
     # Optimization algorithm used to update network weights
@@ -76,15 +73,17 @@ def main(args):
         "\n - training on ", calc_epoch_length * batch_size, " files", "\n - learning rate: ", learning_rate, \
         "\n - hidden units: ", units, "\n - mfcc features: ", mfcc_features, "\n - dropout: ", dropout, "\n"
 
-    # Train model on dataset
+    # Load previous model or create new
     if model_load:
-        model = models.load_model(model_load, custom_objects={'clipped_relu': nn_models.clipped_relu})
+        custom_objects= {'clipped_relu': nn_models.clipped_relu,
+                         '<lambda>': lambda y_true, y_pred: y_pred}
+        model = models.load_model(model_load, custom_objects=custom_objects)
         print ("\nLoaded existing model at: ", model_load)
 
     else:
         model = nn_models.model(model_type=model_type, units=units, input_dim=mfcc_features, output_dim=output_dim,
                                 dropout=dropout)
-        print("\nDidn't load existing model\n")
+        print("\nCreating new model: ", model_type, "\n")
 
     model.compile(loss=loss, optimizer=optimizer)
 
@@ -99,7 +98,6 @@ def main(args):
 
     # The loss callback function that calculates WER while training
     loss_cb = LossCallback(test_func, validation_generator, model, checkpoint=checkpoint, path_to_save=model_name)
-    # checkpoint = ModelCheckpoint(filepath=model_name, period=checkpoint)
 
     model.fit_generator(generator=training_generator,
                         epochs=epochs,
@@ -123,7 +121,7 @@ if __name__ == '__main__':
     parser.add_argument('--batchsize', type=int, default=12, help='Number of files in one batch')
     parser.add_argument('--mfccs', type=int, default=26, help='Number of mfcc features per frame to extract')
     parser.add_argument('--in_el', type=int, default=24, help='Number of batches per epoch. 0 trains on full dataset')
-    parser.add_argument('--epochs', type=int, default=1, help='Number of epochs')
+    parser.add_argument('--epochs', type=int, default=10, help='Number of epochs')
     parser.add_argument('--units', type=int, default=64, help='Number of hidden nodes')
     parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
     parser.add_argument('--model_type', type=str, default='dnn_brnn', help='What model to train: dnn_brnn, dnn_blstm')

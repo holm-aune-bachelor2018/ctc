@@ -4,20 +4,20 @@
 import nn_models
 from keras import models
 from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint
 from keras.utils import multi_gpu_model
 from data import combine_all_wavs_and_trans_from_csvs
 from DataGenerator import DataGenerator
 import keras.backend as K
 from LossCallback import LossCallback
+from tensorflow.python.client import device_lib
 import tensorflow as tf
 from datetime import datetime
 import argparse
+import sys
 
 
 def main(args):
     # Path to training and testing/validation data
-
     path = "/home/<user>/ctc/data_dir/librivox-train-clean-100.csv"
     path_validation = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
 
@@ -38,12 +38,13 @@ def main(args):
     model_type = args.model_type
     model_name = args.model_name
     model_load = args.model_load
-
-    # Sampling rate of data in khz (LibriSpeech is 16khz)
-    frequency = 16
+    gpu_model = False
     shuffle = True
     dropout = 0.2
     checkpoint = 10
+
+    # Sampling rate of data in khz (LibriSpeech is 16khz)
+    frequency = 16
 
     # Data generation parameters
     params = {'batch_size': batch_size,
@@ -58,8 +59,7 @@ def main(args):
     training_generator = DataGenerator(input_dataframe, **params)
     validation_generator = DataGenerator(validation_df, **params)
 
-    # Model input and output shape
-    input_shape = (None, params.get('mfcc_features'))  # "None" to be able to process batches of any size
+    # Model output shape
     output_dim = 29  # Output dim: features to predict + 1 for the CTC blank prediction
 
     # Optimization algorithm used to update network weights
@@ -78,20 +78,38 @@ def main(args):
         "\n - training on ", calc_epoch_length * batch_size, " files", "\n - learning rate: ", learning_rate, \
         "\n - hidden units: ", units, "\n - mfcc features: ", mfcc_features, "\n - dropout: ", dropout, "\n"
 
-    # Train model on dataset
+    # Load previous model or create new. With device cpu ensures that the model is created/loaded on the cpu
     if model_load:
         with tf.device('/cpu:0'):
-            model = models.load_model(model_load, custom_objects={'clipped_relu': nn_models.clipped_relu})
-            print ("\nLoaded existing model at: ", model_load)
+            # When loading custom objects, Keras needs to know where to find them.
+            # The CTC lambda is a dummy function
+            custom_objects = {'clipped_relu': nn_models.clipped_relu,
+                              '<lambda>': lambda y_true, y_pred: y_pred}
+            if gpu_model:
+                model = models.load_model(model_load, custom_objects=custom_objects)
+                model = model.layers[-2]
+                print ("\nLoaded existing model at: ", model_load)
+
+            else:
+                model = models.load_model(model_load, custom_objects=custom_objects)
+                print ("\nLoaded existing model at: ", model_load)
 
     else:
         with tf.device('/cpu:0'):
             model = nn_models.model(model_type=model_type, units=units, input_dim=mfcc_features,
                                     output_dim=output_dim, dropout=dropout)
-            print("\nDidn't load existing model\n")
+            print("\nCreating new model: ", model_type, "\n")
 
-    parallel_model = multi_gpu_model(model, gpus=2)
-    parallel_model.compile(loss=loss, optimizer=optimizer)
+    # Check if there is an even number of gpus available
+    # If using CPU or a single GPU, use train.py
+    num_gpu = len(get_available_gpus())
+    if num_gpu > 1 and num_gpu%2 == 0:
+        parallel_model = multi_gpu_model(model, gpus=num_gpu)
+        parallel_model.compile(loss=loss, optimizer=optimizer)
+    else:
+        print "For multiple gpu training please ensure that there is " \
+              "an even number of GPUs available and more than one."
+        sys.exit()
 
     # Print model
     model.summary()
@@ -104,7 +122,6 @@ def main(args):
 
     # The loss callback function that calculates WER while training
     loss_cb = LossCallback(test_func, validation_generator, model, checkpoint=checkpoint, path_to_save=model_name)
-    # checkpoint = ModelCheckpoint(filepath=model_name, period=checkpoint)
 
     parallel_model.fit_generator(generator=training_generator,
                                  epochs=epochs,
@@ -122,6 +139,11 @@ def main(args):
     print "Ending time: ", datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
+def get_available_gpus():
+    local_device_protos = device_lib.list_local_devices()
+    return [x.name for x in local_device_protos if x.device_type == 'GPU']
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -136,7 +158,11 @@ if __name__ == '__main__':
     parser.add_argument('--model_load', type=str, default='', help='Path of existing model to load. '
                                                                    'If empty creates new model')
 
+    # gpu_model = False - load a multi_gpu model saved during (and not after) training
+    # shuffle = True
+    # dropout = 0.2
+    # checkpoint = 10
+
     args = parser.parse_args()
 
-    print "args: ", args
     main(args)
