@@ -2,9 +2,11 @@
 # !/home/marith1/envs/tensorflow/bin/python
 
 import nn_models
-from keras import optimizers, models, callbacks
+from keras import models
+from keras.optimizers import Adam
+from keras.callbacks import ModelCheckpoint
 from keras.utils import multi_gpu_model
-import data
+from data import combine_all_wavs_and_trans_from_csvs
 from DataGenerator import DataGenerator
 import keras.backend as K
 from LossCallback import LossCallback
@@ -16,35 +18,32 @@ import argparse
 def main(args):
     # Path to training and testing/validation data
 
-    path = "/home/<user>/ctc/data_dir/librivox-dev-clean-100.csv"
+    path = "/home/<user>/ctc/data_dir/librivox-train-clean-100.csv"
     path_validation = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
-
-    # Load existing model or not, and path to existing model
-    load_ex_model = False
-    ex_model_path = ""
 
     # Create training and validation dataframes
     print "\nReading training data:"
-    _, input_dataframe = data.combine_all_wavs_and_trans_from_csvs(path)
+    _, input_dataframe = combine_all_wavs_and_trans_from_csvs(path)
     print "\nReading validation data: "
-    _, validation_df = data.combine_all_wavs_and_trans_from_csvs(path_validation)
+    _, validation_df = combine_all_wavs_and_trans_from_csvs(path_validation)
 
     # Parameters for script
-    # batch_size, mfcc_features, epoch_length, epochs, units, learning_rate, model_name
-
+    # batch_size, mfcc_features, epoch_length, epochs, units, learning_rate, model_type, model_name, model_load
     batch_size = args.batchsize
     mfcc_features = args.mfccs
     input_epoch_length = args.in_el
     epochs = args.epochs
     units = args.units
     learning_rate = args.lr
+    model_type = args.model_type
     model_name = args.model_name
+    model_load = args.model_load
 
     # Sampling rate of data in khz (LibriSpeech is 16khz)
     frequency = 16
     shuffle = True
     dropout = 0.2
-    checkpoint_period = 10
+    checkpoint = 10
 
     # Data generation parameters
     params = {'batch_size': batch_size,
@@ -65,7 +64,7 @@ def main(args):
 
     # Optimization algorithm used to update network weights
     eps = 1e-8  # epsilon 1e-8
-    optimizer = optimizers.Adam(lr=learning_rate, epsilon=eps, clipnorm=2.0)
+    optimizer = Adam(lr=learning_rate, epsilon=eps, clipnorm=2.0)
 
     # Dummy loss-function to compile model, actual CTC loss-function defined as a lambda layer in model
     loss = {'ctc': lambda y_true, y_pred: y_pred}
@@ -80,20 +79,22 @@ def main(args):
         "\n - hidden units: ", units, "\n - mfcc features: ", mfcc_features, "\n - dropout: ", dropout, "\n"
 
     # Train model on dataset
-    if load_ex_model:
+    if model_load:
         with tf.device('/cpu:0'):
-            model = models.load_model(ex_model_path, custom_objects={'clipped_relu': nn_models.clipped_relu})
-            print ("\nLoaded existing model at: ", ex_model_path)
+            model = models.load_model(model_load, custom_objects={'clipped_relu': nn_models.clipped_relu})
+            print ("\nLoaded existing model at: ", model_load)
 
     else:
         with tf.device('/cpu:0'):
-            model = nn_models.dnn_brnn(units, params.get('mfcc_features'), output_dim, dropout=dropout)
+            model = nn_models.model(model_type=model_type, units=units, input_dim=mfcc_features,
+                                    output_dim=output_dim, dropout=dropout)
             print("\nDidn't load existing model\n")
+
+    parallel_model = multi_gpu_model(model, gpus=2)
+    parallel_model.compile(loss=loss, optimizer=optimizer)
 
     # Print model
     model.summary()
-    parallel_model = multi_gpu_model(model, gpus=2)
-    parallel_model.compile(loss=loss, optimizer=optimizer)
 
     # Creates a test function that takes sound input and outputs predictions
     # Used to calculate WER while training the network
@@ -102,8 +103,8 @@ def main(args):
     test_func = K.function([input_data], [y_pred])
 
     # The loss callback function that calculates WER while training
-    loss_cb = LossCallback(test_func, validation_generator, model, checkpoint=checkpoint_period, path_to_save=model_name)
-    # checkpoint = callbacks.ModelCheckpoint(filepath=model_name, period=checkpoint_period)
+    loss_cb = LossCallback(test_func, validation_generator, model, checkpoint=checkpoint, path_to_save=model_name)
+    # checkpoint = ModelCheckpoint(filepath=model_name, period=checkpoint)
 
     parallel_model.fit_generator(generator=training_generator,
                                  epochs=epochs,
@@ -111,7 +112,6 @@ def main(args):
                                  callbacks=[loss_cb],
                                  validation_data=validation_generator,
                                  workers=1,
-                                 # max_queue_size=12,
                                  shuffle=shuffle)
 
     if args.model_name:
@@ -131,7 +131,10 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=1, help='Number of epochs')
     parser.add_argument('--units', type=int, default=64, help='Number of hidden nodes')
     parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
-    parser.add_argument('--model_name', type=str, help='path to save model')
+    parser.add_argument('--model_type', type=str, default='dnn_brnn', help='What model to train: dnn_brnn, dnn_blstm')
+    parser.add_argument('--model_name', type=str, default='models/saved_model.h5', help='Path, where to save model')
+    parser.add_argument('--model_load', type=str, default='', help='Path of existing model to load. '
+                                                                   'If empty creates new model')
 
     args = parser.parse_args()
 
