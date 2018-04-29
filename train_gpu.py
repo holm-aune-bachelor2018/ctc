@@ -88,17 +88,17 @@ def main(args):
             if gpu_model:
                 model = models.load_model(model_load, custom_objects=custom_objects)
                 model = model.layers[-2]
-                print ("\nLoaded existing model at: ", model_load)
+                print ("Loaded existing model at: ", model_load)
 
             else:
                 model = models.load_model(model_load, custom_objects=custom_objects)
-                print ("\nLoaded existing model at: ", model_load)
+                print ("Loaded existing model at: ", model_load)
 
     else:
         with tf.device('/cpu:0'):
             model = nn_models.model(model_type=model_type, units=units, input_dim=mfcc_features,
                                     output_dim=output_dim, dropout=dropout)
-            print("\nCreating new model: ", model_type, "\n")
+            print("Creating new model: ", model_type)
 
     # Check if there is an even number of gpus available
     # If using CPU or a single GPU, use train.py

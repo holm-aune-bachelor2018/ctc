@@ -78,12 +78,12 @@ def main(args):
         custom_objects= {'clipped_relu': nn_models.clipped_relu,
                          '<lambda>': lambda y_true, y_pred: y_pred}
         model = models.load_model(model_load, custom_objects=custom_objects)
-        print ("\nLoaded existing model at: ", model_load)
+        print ("Loaded existing model at: ", model_load)
 
     else:
         model = nn_models.model(model_type=model_type, units=units, input_dim=mfcc_features, output_dim=output_dim,
                                 dropout=dropout)
-        print("\nCreating new model: ", model_type, "\n")
+        print("Creating new model: ", model_type)
 
     model.compile(loss=loss, optimizer=optimizer)
 
