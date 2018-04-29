@@ -9,7 +9,6 @@ from data import combine_all_wavs_and_trans_from_csvs
 from DataGenerator import DataGenerator
 import keras.backend as K
 from LossCallback import LossCallback
-from tensorflow.python.client import device_lib
 import tensorflow as tf
 from datetime import datetime
 import argparse
@@ -42,6 +41,7 @@ def main(args):
     shuffle = True
     dropout = 0.2
     checkpoint = 10
+    num_gpu = 2
 
     # Sampling rate of data in khz (LibriSpeech is 16khz)
     frequency = 16
@@ -102,14 +102,8 @@ def main(args):
 
     # Check if there is an even number of gpus available
     # If using CPU or a single GPU, use train.py
-    num_gpu = len(get_available_gpus())
-    if num_gpu > 1 and num_gpu%2 == 0:
-        parallel_model = multi_gpu_model(model, gpus=num_gpu)
-        parallel_model.compile(loss=loss, optimizer=optimizer)
-    else:
-        print "For multiple gpu training please ensure that there is " \
-              "an even number of GPUs available and more than one."
-        sys.exit()
+    parallel_model = multi_gpu_model(model, gpus=num_gpu)
+    parallel_model.compile(loss=loss, optimizer=optimizer)
 
     # Print model
     model.summary()
@@ -137,12 +131,6 @@ def main(args):
     K.clear_session()
 
     print "Ending time: ", datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-
-def get_available_gpus():
-    local_device_protos = device_lib.list_local_devices()
-    return [x.name for x in local_device_protos if x.device_type == 'GPU']
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
