@@ -55,23 +55,24 @@ def dnn_brnn(units, input_dim=26, output_dim=29, dropout=0.2):
 
     # 3 fully connected layers DNN ReLu
     # Dropout rate 20 % at each FC layer
-    x = TimeDistributed(Dropout(dropout), name='dropout_1')(x)
     x = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense,  bias_initializer=bias_init_dense,
                               activation=clipped_relu), name='fc_1')(x)
+    x = TimeDistributed(Dropout(dropout), name='dropout_1')(x)
 
-    x = TimeDistributed(Dropout(dropout), name='dropout_2')(x)
     x = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
                               activation=clipped_relu), name='fc_2')(x)
+    x = TimeDistributed(Dropout(dropout), name='dropout_2')(x)
 
-    x = TimeDistributed(Dropout(dropout), name='dropout_3')(x)
     x = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
                               activation=clipped_relu), name='fc_3')(x)
+    x = TimeDistributed(Dropout(dropout), name='dropout_3')(x)
 
     # Bidirectional RNN (with ReLu)
     x = Bidirectional(SimpleRNN(units, activation='relu', kernel_initializer=kernel_init_rnn,
                                 bias_initializer=bias_init_rnn, return_sequences=True),
                       merge_mode='concat', name='bi_rnn')(x)
 
+    # x = TimeDistributed(Dropout(dropout), name='dropout_4')(x)
     # 1 fully connected relu layer
     inner = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
                                   activation='relu'), name='fc_4')(x)
