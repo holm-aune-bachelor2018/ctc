@@ -4,6 +4,7 @@
 import nn_models
 from keras import models
 from keras.optimizers import Adam
+from keras.callbacks import ReduceLROnPlateau
 from keras.utils import multi_gpu_model
 from data import combine_all_wavs_and_trans_from_csvs
 from DataGenerator import DataGenerator
@@ -49,6 +50,7 @@ def main(args):
 
     # Sampling rate of data in khz (LibriSpeech is 16khz)
     frequency = 16
+    reduce_lr = False
 
     # Data generation parameters
     params = {'batch_size': batch_size,
@@ -120,14 +122,20 @@ def main(args):
                 y_pred = model.get_layer('ctc').input[0]
                 test_func = K.function([input_data], [y_pred])
 
+                if (reduce_lr):
+                    reduce_lr_cb = ReduceLROnPlateau(factor=0.2, patience=6, verbose=0, min_lr=0.0000001)
+                    callbacks = [reduce_lr_cb]
+                else:
+                    callbacks = []
+
                 # The loss callback function that calculates WER while training
                 loss_cb = LossCallback(test_func, validation_generator, model, checkpoint=checkpoint,
                                        path_to_save=model_save)
-
+                callbacks.append(loss_cb)
                 parallel_model.fit_generator(generator=training_generator,
                                              epochs=epochs,
                                              verbose=2,
-                                             callbacks=[loss_cb],
+                                             callbacks=callbacks,
                                              validation_data=validation_generator,
                                              workers=1,
                                              shuffle=shuffle)
@@ -158,24 +166,25 @@ def main(args):
 
     if args.model_save:
         model.save(model_save)
+        print "Model saved: ", model_save
 
     if log_file:
         timestamp = datetime.now().strftime('%m-%d_%H%M') + ".csv"
         stats = pandas.DataFrame(data=loss_cb.values, columns=['loss', 'val_loss', 'wer'])
         stats.to_csv(args.log_file + "_" + timestamp)
+        print "Log file saved: ", args.log_file + "_" + timestamp
 
     K.clear_session()
-    print "Test time: ", timestamp
     print "Ending time: ", datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--batchsize', type=int, default=10, help='Number of files in one batch')
+    parser.add_argument('--batchsize', type=int, default=5, help='Number of files in one batch')
     parser.add_argument('--mfccs', type=int, default=26, help='Number of mfcc features per frame to extract')
     parser.add_argument('--in_el', type=int, default=24, help='Number of batches per epoch. 0 trains on full dataset')
-    parser.add_argument('--epochs', type=int, default=3, help='Number of epochs')
+    parser.add_argument('--epochs', type=int, default=10, help='Number of epochs')
     parser.add_argument('--units', type=int, default=64, help='Number of hidden nodes')
     parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
     parser.add_argument('--model_type', type=str, default='dnn_brnn', help='What model to train: dnn_brnn, dnn_blstm')
@@ -186,7 +195,7 @@ if __name__ == '__main__':
     parser.add_argument('--shuffle', type=bool, default=True, help='Toggle shuffle batches after epoch')
     parser.add_argument('--dropout', type=float, default=0.2, help='Set dropout value')
     parser.add_argument('--checkpoint', type=int, default=10, help='No. of epochs before save during training')
-    parser.add_argument('--num_gpu', type=int, default=1, help='No. of gpu for multi gpu training. Must be even number')
+    parser.add_argument('--num_gpu', type=int, default=2, help='No. of gpu for multi gpu training. Must be even number')
 
     parser.add_argument('--log_file', type=str, default="log", help='Path to log stats to csv file')
 
