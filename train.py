@@ -12,6 +12,8 @@ from LossCallback import LossCallback
 import tensorflow as tf
 from datetime import datetime
 import argparse
+import pandas
+
 
 def main(args):
     # Path to training and testing/validation data
@@ -42,6 +44,8 @@ def main(args):
     checkpoint = args.checkpoint
     num_gpu = args.num_gpu
     shuffle = args.shuffle
+
+    log_file = args.log_file
 
     # Sampling rate of data in khz (LibriSpeech is 16khz)
     frequency = 16
@@ -88,17 +92,17 @@ def main(args):
             if load_multi:
                 model = models.load_model(model_load, custom_objects=custom_objects)
                 model = model.layers[-2]
-                print ("Loaded existing model at: ", model_load)
+                print "Loaded existing model at: ", model_load
 
             else:
                 model = models.load_model(model_load, custom_objects=custom_objects)
-                print ("Loaded existing model at: ", model_load)
+                print "Loaded existing model at: ", model_load
 
     else:
         with tf.device('/cpu:0'):
             model = nn_models.model(model_type=model_type, units=units, input_dim=mfcc_features,
                                     output_dim=output_dim, dropout=dropout)
-            print("Creating new model: ", model_type)
+            print "Creating new model: ", model_type
 
     # Train with parallel model on 2 or more gpus, must be even number
     if num_gpu > 1:
@@ -155,8 +159,13 @@ def main(args):
     if args.model_save:
         model.save(model_save)
 
-    K.clear_session()
+    if log_file:
+        timestamp = datetime.now().strftime('%m-%d_%H%M') + ".csv"
+        stats = pandas.DataFrame(data=loss_cb.values, columns=['loss', 'val_loss', 'wer'])
+        stats.to_csv(args.log_file + "_" + timestamp)
 
+    K.clear_session()
+    print "Test time: ", timestamp
     print "Ending time: ", datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
@@ -166,7 +175,7 @@ if __name__ == '__main__':
     parser.add_argument('--batchsize', type=int, default=10, help='Number of files in one batch')
     parser.add_argument('--mfccs', type=int, default=26, help='Number of mfcc features per frame to extract')
     parser.add_argument('--in_el', type=int, default=24, help='Number of batches per epoch. 0 trains on full dataset')
-    parser.add_argument('--epochs', type=int, default=1, help='Number of epochs')
+    parser.add_argument('--epochs', type=int, default=3, help='Number of epochs')
     parser.add_argument('--units', type=int, default=64, help='Number of hidden nodes')
     parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
     parser.add_argument('--model_type', type=str, default='dnn_brnn', help='What model to train: dnn_brnn, dnn_blstm')
@@ -177,7 +186,9 @@ if __name__ == '__main__':
     parser.add_argument('--shuffle', type=bool, default=True, help='Toggle shuffle batches after epoch')
     parser.add_argument('--dropout', type=float, default=0.2, help='Set dropout value')
     parser.add_argument('--checkpoint', type=int, default=10, help='No. of epochs before save during training')
-    parser.add_argument('--num_gpu', type=int, default=2, help='No. of gpu for multi gpu training. Must be even number')
+    parser.add_argument('--num_gpu', type=int, default=1, help='No. of gpu for multi gpu training. Must be even number')
+
+    parser.add_argument('--log_file', type=str, default="log", help='Path to log stats to csv file')
 
     args = parser.parse_args()
 

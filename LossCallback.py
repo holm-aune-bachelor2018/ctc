@@ -25,9 +25,19 @@ class LossCallback(Callback):
         wers = self.calc_wer()
         print " - average WER: ", wers[1]
 
+        value_list = []
+        value_list.append(logs.get('loss'))
+        value_list.append(logs.get('val_loss'))
+        value_list.append(wers[1])
+
+        self.values.append(value_list)
+
         if ((epoch+1) % self.checkpoint) == 0 and self.path_to_save:
             model_to_save = Model(self.model.inputs, self.model.outputs)
             model_to_save.save(self.path_to_save)
+
+    def on_train_begin(self, logs={}):
+        self.values = []
 
     def on_train_end(self, logs={}):
         print "\n - Training ended, prediction samples -"
