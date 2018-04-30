@@ -15,10 +15,8 @@ import argparse
 
 def main(args):
     # Path to training and testing/validation data
-    #path = "/home/<user>/ctc/data_dir/librivox-train-clean-100.csv"
-    #path_validation = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
-    path = "data_dir/librivox-dev-clean.csv"
-    path_validation = "data_dir/librivox-test-clean.csv"
+    path = "/home/<user>/ctc/data_dir/librivox-train-clean-100.csv"
+    path_validation = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
 
     # Create training and validation dataframes
     print "\nReading training data:"
@@ -179,7 +177,7 @@ if __name__ == '__main__':
     parser.add_argument('--shuffle', type=bool, default=True, help='Toggle shuffle batches after epoch')
     parser.add_argument('--dropout', type=float, default=0.2, help='Set dropout value')
     parser.add_argument('--checkpoint', type=int, default=10, help='No. of epochs before save during training')
-    parser.add_argument('--num_gpu', type=int, default=1, help='No. of gpu for multi gpu training. Must be even number')
+    parser.add_argument('--num_gpu', type=int, default=2, help='No. of gpu for multi gpu training. Must be even number')
 
     args = parser.parse_args()
 
