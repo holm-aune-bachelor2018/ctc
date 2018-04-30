@@ -25,7 +25,7 @@ class LossCallback(Callback):
         wers = self.calc_wer()
         print " - average WER: ", wers[1]
 
-        if ((epoch+1) % self.checkpoint)==0:
+        if ((epoch+1) % self.checkpoint) == 0 and self.path_to_save:
             model_to_save = Model(self.model.inputs, self.model.outputs)
             model_to_save.save(self.path_to_save)
 
