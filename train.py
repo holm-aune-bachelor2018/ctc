@@ -102,8 +102,12 @@ def main(args):
 
     else:
         with tf.device('/cpu:0'):
+            if num_gpu % 2 == 0:
+                cudnn = True
+            else:
+                cudnn = False
             model = nn_models.model(model_type=model_type, units=units, input_dim=mfcc_features,
-                                    output_dim=output_dim, dropout=dropout)
+                                    output_dim=output_dim, dropout=dropout, cudnn=cudnn)
             print "Creating new model: ", model_type
 
     # Train with parallel model on 2 or more gpus, must be even number
@@ -122,8 +126,9 @@ def main(args):
                 y_pred = model.get_layer('ctc').input[0]
                 test_func = K.function([input_data], [y_pred])
 
-                if (reduce_lr):
-                    reduce_lr_cb = ReduceLROnPlateau(factor=0.2, patience=6, verbose=0, min_lr=0.0000001)
+                if reduce_lr:
+                    print "Reducing learning rate on plateau"
+                    reduce_lr_cb = ReduceLROnPlateau(factor=0.2, patience=5, verbose=0, min_delta=0, min_lr=0.0000001)
                     callbacks = [reduce_lr_cb]
                 else:
                     callbacks = []
@@ -187,7 +192,8 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=10, help='Number of epochs')
     parser.add_argument('--units', type=int, default=64, help='Number of hidden nodes')
     parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
-    parser.add_argument('--model_type', type=str, default='dnn_brnn', help='What model to train: dnn_brnn, dnn_blstm')
+    parser.add_argument('--model_type', type=str, default='dnn_brnn',
+                        help='What model to train: dnn_brnn, dnn_blstm, deep_rnn')
     parser.add_argument('--model_save', type=str, help='Path, where to save model')
     parser.add_argument('--model_load', type=str, default='', help='Path of existing model to load. '
                                                                    'If empty creates new model')
