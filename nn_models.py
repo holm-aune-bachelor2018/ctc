@@ -4,13 +4,13 @@ from keras.layers import Dense, SimpleRNN, LSTM, CuDNNLSTM, Bidirectional, Maski
 from keras import backend as K
 
 
-def model(model_type='default', units=512, input_dim=26, output_dim=29, dropout=0.2, cudnn=False):
+def model(model_type='default', units=512, input_dim=26, output_dim=29, dropout=0.2):
 
     if model_type == 'default' or model_type == 'dnn_brnn':
         network_model = dnn_brnn(units, input_dim, output_dim, dropout)
 
     elif model_type == 'dnn_blstm':
-        network_model = dnn_blstm(units, input_dim, output_dim, dropout, cudnn=cudnn)
+        network_model = dnn_blstm(units, input_dim, output_dim, dropout)
 
     elif model_type == 'deep_rnn':
         network_model = deep_rnn(units, input_dim, output_dim, dropout)
@@ -171,7 +171,7 @@ def deep_rnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_rnn=3):
     return network_model
 
 
-def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2, cudnn=False):
+def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2):
     """
         :param units: units
         :param input_dim: input_dim(mfcc_features)
@@ -187,6 +187,7 @@ def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2, cudnn=False):
         """
 
     dtype = 'float32'
+    cudnn = False
     # kernel and bias initializers for fully connected dense layers
     kernel_init_dense = 'random_normal'
     bias_init_dense = 'random_normal'
@@ -219,7 +220,7 @@ def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2, cudnn=False):
     # Bidirectional RNN (with ReLu)
     # If running on GPU, use the CuDNN optimised LSTM model
     if cudnn:
-        x = Bidirectional(CuDNNLSTM(units, activation='relu', kernel_initializer=kernel_init_rnn, dropout=dropout,
+        x = Bidirectional(CuDNNLSTM(units, kernel_initializer=kernel_init_rnn,
                                     bias_initializer=bias_init_rnn, unit_forget_bias=True, return_sequences=True),
                           merge_mode='sum', name='CuDNN_bi_lstm')(x)
     else:

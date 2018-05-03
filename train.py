@@ -102,12 +102,8 @@ def main(args):
 
     else:
         with tf.device('/cpu:0'):
-            if num_gpu % 2 == 0:
-                cudnn = True
-            else:
-                cudnn = False
             model = nn_models.model(model_type=model_type, units=units, input_dim=mfcc_features,
-                                    output_dim=output_dim, dropout=dropout, cudnn=cudnn)
+                                    output_dim=output_dim, dropout=dropout)
             print "Creating new model: ", model_type
 
     # Train with parallel model on 2 or more gpus, must be even number
@@ -128,7 +124,7 @@ def main(args):
 
                 if reduce_lr:
                     print "Reducing learning rate on plateau"
-                    reduce_lr_cb = ReduceLROnPlateau(factor=0.2, patience=5, verbose=0, min_delta=0, min_lr=0.0000001)
+                    reduce_lr_cb = ReduceLROnPlateau(factor=0.2, patience=5, verbose=0, epsilon=0.1, min_lr=0.0000001)
                     callbacks = [reduce_lr_cb]
                 else:
                     callbacks = []
