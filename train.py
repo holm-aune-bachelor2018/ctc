@@ -135,7 +135,7 @@ def main(args):
 
                 # The loss callback function that calculates WER while training
                 loss_cb = LossCallback(test_func, validation_generator, model, checkpoint=checkpoint,
-                                       path_to_save=model_save)
+                                       path_to_save=model_save, log_file_path=log_file)
                 callbacks.append(loss_cb)
                 parallel_model.fit_generator(generator=training_generator,
                                              epochs=epochs,
@@ -156,7 +156,7 @@ def main(args):
         test_func = K.function([input_data], [y_pred])
 
         loss_cb = LossCallback(test_func, validation_generator, model, checkpoint=checkpoint,
-                               path_to_save=model_save)
+                               path_to_save=model_save, log_file_path=log_file)
 
         model.fit_generator(generator=training_generator,
                             epochs=epochs,
@@ -173,12 +173,6 @@ def main(args):
         model.save(model_save)
         print "Model saved: ", model_save
 
-    if log_file:
-        timestamp = datetime.now().strftime('%m-%d_%H%M') + ".csv"
-        stats = pandas.DataFrame(data=loss_cb.values, columns=['loss', 'val_loss', 'wer'])
-        stats.to_csv(args.log_file + "_" + timestamp)
-        print "Log file saved: ", args.log_file + "_" + timestamp
-
     K.clear_session()
     print "Ending time: ", datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -189,7 +183,7 @@ if __name__ == '__main__':
     parser.add_argument('--batchsize', type=int, default=5, help='Number of files in one batch')
     parser.add_argument('--mfccs', type=int, default=26, help='Number of mfcc features per frame to extract')
     parser.add_argument('--in_el', type=int, default=24, help='Number of batches per epoch. 0 trains on full dataset')
-    parser.add_argument('--epochs', type=int, default=10, help='Number of epochs')
+    parser.add_argument('--epochs', type=int, default=12, help='Number of epochs')
     parser.add_argument('--units', type=int, default=64, help='Number of hidden nodes')
     parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
     parser.add_argument('--model_type', type=str, default='dnn_brnn',
