@@ -156,8 +156,12 @@ def main(args):
                                              validation_data=validation_generator,
                                              workers=1,
                                              shuffle=shuffle)
-        except ValueError:
-            raise ValueError('Number of gpus must be en even number')
+        # except ValueError:
+        #    raise ValueError('Number of gpus must be en even number')
+        except (Exception, ArithmeticError) as e:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            print (message)
 
     elif num_gpu == 1 or num_gpu == 0:
         model.compile(loss=loss, optimizer=optimizer)
