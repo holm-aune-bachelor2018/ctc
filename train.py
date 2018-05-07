@@ -4,7 +4,7 @@
 import nn_models
 from keras import models
 from keras.optimizers import Adam
-from keras.callbacks import ReduceLROnPlateau
+from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from keras.utils import multi_gpu_model
 from data import combine_all_wavs_and_trans_from_csvs
 from DataGenerator import DataGenerator
@@ -13,19 +13,21 @@ from LossCallback import LossCallback
 import tensorflow as tf
 from datetime import datetime
 import argparse
-import pandas
 
 
 def main(args):
     # Path to training and testing/validation data
-    path = "/home/<user>/ctc/data_dir/librivox-train-clean-100.csv"
-    path_validation = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
+    path = "/home/<user>/ctc/data_dir/librivox-train-clean-360.csv"
+    path_validation = "/home/<user>/ctc/data_dir/librivox-dev-clean.csv"
+    path_test = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
 
     # Create training and validation dataframes
     print "\nReading training data:"
     _, input_dataframe = combine_all_wavs_and_trans_from_csvs(path)
     print "\nReading validation data: "
     _, validation_df = combine_all_wavs_and_trans_from_csvs(path_validation)
+    print "\nReading test data: "
+    _, test_df = combine_all_wavs_and_trans_from_csvs(path_test)
 
     # Input parameters for script
     # Model params:
@@ -50,7 +52,9 @@ def main(args):
 
     # Sampling rate of data in khz (LibriSpeech is 16khz)
     frequency = 16
-    reduce_lr = False
+    reduce_lr = False       # Reduce learning rate on val_loss plateau
+    early_stopping = False  # Stop training early if val_loss stops improving
+    save_best = False       # Save model with best val_loss (on path "model_save" + "_best")
 
     # Data generation parameters
     params = {'batch_size': batch_size,
@@ -64,6 +68,7 @@ def main(args):
     # Data generators for training data and validation data
     training_generator = DataGenerator(input_dataframe, **params)
     validation_generator = DataGenerator(validation_df, **params)
+    test_generator = DataGenerator(test_df, **params)
 
     # Model output shape
     output_dim = 29  # Output dim: features to predict + 1 for the CTC blank prediction
@@ -129,10 +134,21 @@ def main(args):
                 else:
                     callbacks = []
 
+                if early_stopping:
+                    es_cb = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=0, mode='auto')
+                    callbacks.append(es_cb)
+
+                if save_best:
+                    save_best = model_save + str('_best')
+                    mcp_cb = ModelCheckpoint(save_best, monitor='val_loss', verbose=1, save_best_only=True, period=1)
+
+                    callbacks.append(mcp_cb)
+
                 # The loss callback function that calculates WER while training
-                loss_cb = LossCallback(test_func, validation_generator, model, checkpoint=checkpoint,
+                loss_cb = LossCallback(test_func, validation_generator, test_generator, model, checkpoint=checkpoint,
                                        path_to_save=model_save, log_file_path=log_file)
                 callbacks.append(loss_cb)
+
                 parallel_model.fit_generator(generator=training_generator,
                                              epochs=epochs,
                                              verbose=2,
@@ -151,7 +167,7 @@ def main(args):
         y_pred = model.get_layer('ctc').input[0]
         test_func = K.function([input_data], [y_pred])
 
-        loss_cb = LossCallback(test_func, validation_generator, model, checkpoint=checkpoint,
+        loss_cb = LossCallback(test_func, validation_generator, test_generator, model, checkpoint=checkpoint,
                                path_to_save=model_save, log_file_path=log_file)
 
         model.fit_generator(generator=training_generator,

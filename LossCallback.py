@@ -8,17 +8,11 @@ import pandas
 
 
 class LossCallback(Callback):
-    """
 
-
-    Args:
-        test_func ( ):
-        validation_gen ( ):
-
-    """
-    def __init__(self, test_func, validation_gen, model, checkpoint, path_to_save, log_file_path):
+    def __init__(self, test_func, validation_gen, test_gen, model, checkpoint, path_to_save, log_file_path):
         self.test_func = test_func
         self.validation_gen = validation_gen
+        self.test_gen = test_gen
         self.model = model
         self.checkpoint = checkpoint
         self.path_to_save = path_to_save
@@ -26,13 +20,13 @@ class LossCallback(Callback):
         self.timestamp = datetime.now().strftime('%m-%d_%H%M') + ".csv"
 
     def on_epoch_end(self, epoch, logs={}):
-        wers = self.calc_wer()
-        print " - average WER: ", wers[1]
+        wer = self.calc_wer(self.validation_gen)
+        print " - average WER: ", wer[1]
 
         value_list = []
         value_list.append(logs.get('loss'))
         value_list.append(logs.get('val_loss'))
-        value_list.append(wers[1])
+        value_list.append(wer[1])
 
         self.values.append(value_list)
 
@@ -46,7 +40,9 @@ class LossCallback(Callback):
         self.values = []
 
     def on_train_end(self, logs={}):
-        print "\n - Training ended, prediction samples -"
+        test_wer = self.calc_wer(self.test_gen)
+        print "\n - Training ended, test wer: ", test_wer[1]
+        print "\nPrediction samples -"
         batch = 6
         input, output = self.validation_gen.__getitem__(batch)
 
@@ -60,11 +56,11 @@ class LossCallback(Callback):
 
         self.save_log()
 
-    def calc_wer(self):
+    def calc_wer(self, data_gen):
         out_true=[]
         out_pred=[]
-        for batch in xrange(0, self.validation_gen.epoch_length, self.validation_gen.batch_size):
-            input, output = self.validation_gen.__getitem__(batch)
+        for batch in xrange(0, data_gen.epoch_length, data_gen.batch_size):
+            input, output = data_gen.__getitem__(batch)
             x_data = input.get("the_input")
             y_data = input.get("the_labels")
 
