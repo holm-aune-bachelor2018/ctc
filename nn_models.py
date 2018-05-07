@@ -200,8 +200,12 @@ def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2):
     # x_input layer, dim: (batch_size * x_seq_size * mfcc_features)
     input_data = Input(name='the_input', shape=(None, input_dim), dtype=dtype)
 
-    # Masking layer
-    x = Masking(mask_value=0., name='masking')(input_data)
+    if cudnn:
+        # CuDNNLSTM does not support masking
+        x = input_data
+    else:
+        # Masking layer
+        x = Masking(mask_value=0., name='masking')(input_data)
 
     # 3 fully connected layers DNN ReLu
     # Dropout rate 20 % at each FC layer
@@ -220,8 +224,8 @@ def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2):
     # Bidirectional RNN (with ReLu)
     # If running on GPU, use the CuDNN optimised LSTM model
     if cudnn:
-        x = Bidirectional(CuDNNLSTM(units, kernel_initializer=kernel_init_rnn,
-                                    bias_initializer=bias_init_rnn, unit_forget_bias=True, return_sequences=True),
+        x = Bidirectional(CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
+                                    unit_forget_bias=True, return_sequences=True),
                           merge_mode='sum', name='CuDNN_bi_lstm')(x)
     else:
         x = Bidirectional(LSTM(units, activation='relu', kernel_initializer=kernel_init_rnn, dropout=dropout,
