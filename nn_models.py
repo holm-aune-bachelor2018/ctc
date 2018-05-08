@@ -138,7 +138,7 @@ def cnn_brnn(units, input_dim=26, output_dim=29, dropout=0.2):
     # Masking layer
     # x = Masking(mask_value=0., name='masking')(input_data)
 
-    x = ZeroPadding1D(padding=(0, 1024))(input_data)
+    x = ZeroPadding1D(padding=(0, 2048))(input_data)
 
     x = Conv1D(filters=units, kernel_size=5, strides=1, activation=None,
                kernel_initializer=kernel_init_conv, bias_initializer=bias_init_conv)(x)
