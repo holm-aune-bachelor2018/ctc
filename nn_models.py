@@ -115,14 +115,14 @@ def cnn_brnn(units, input_dim=26, output_dim=29, dropout=0.2):
     """
 
     dtype = 'float32'
-    channels = 32
+    numb_of_rnn = 3
     # kernel and bias initializers for fully connected dense layers
     kernel_init_dense = 'random_normal'
     bias_init_dense = 'random_normal'
 
     # kernel and bias initializers for recurrent layer
     kernel_init_conv = 'glorot_uniform'
-    bias_init_conv = 'zeros'
+    bias_init_conv = 'random_normal'
 
     # kernel and bias initializers for recurrent layer
     kernel_init_rnn = 'glorot_uniform'
@@ -135,36 +135,36 @@ def cnn_brnn(units, input_dim=26, output_dim=29, dropout=0.2):
     # (batch_size * x_seq_size * mfcc_features)
     # (batch_size, steps, input_dim)
 
-    x = BatchNormalization()(input_data)
+    x = BatchNormalization(name='batchnorm_1')(input_data)
 
     x = ZeroPadding1D(padding=(0, 2048))(x)
 
     x = Conv1D(filters=units, kernel_size=5, strides=1, activation='relu',
-               kernel_initializer=kernel_init_conv, bias_initializer=bias_init_conv)(x)
+               kernel_initializer=kernel_init_conv, bias_initializer=bias_init_conv, name='conv_1')(x)
 
-    x = BatchNormalization()(x)
+    x = BatchNormalization(name='batchnorm_2')(x)
 
     x = Conv1D(filters=units, kernel_size=5, strides=1, activation='relu',
-               kernel_initializer=kernel_init_conv, bias_initializer=bias_init_conv)(x)
+               kernel_initializer=kernel_init_conv, bias_initializer=bias_init_conv, name='conv_2')(x)
 
-    x = BatchNormalization()(x)
+    x = BatchNormalization(name='batchnorm_3')(x)
 
     x = Conv1D(filters=units, kernel_size=5, strides=2, activation='relu',
-               kernel_initializer=kernel_init_conv, bias_initializer=bias_init_conv)(x)
+               kernel_initializer=kernel_init_conv, bias_initializer=bias_init_conv, name='conv_3')(x)
 
-    x = BatchNormalization()(x)
+    x = BatchNormalization(name='batchnorm_4')(x)
 
-    # Bidirectional RNN (with ReLu)
-    x = Bidirectional(SimpleRNN(units, activation='relu', kernel_initializer=kernel_init_rnn, dropout=0.2,
-                                bias_initializer=bias_init_rnn, return_sequences=True),
-                      merge_mode='concat', name='bi_rnn')(x)
+    # Deep RNN network with a default of 3 layers
+    for i in range(0, numb_of_rnn):
+        x = SimpleRNN(units, activation='relu', kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
+                      dropout=dropout, return_sequences=True, name=('deep_rnn_'+ str(i+1)))(x)
 
-    x = BatchNormalization()(x)
+    x = BatchNormalization(name='batchnorm_5')(x)
 
     # 1 fully connected relu layer
     x = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
                               activation='relu'), name='fc_4')(x)
-    x = TimeDistributed(Dropout(dropout), name='dropout_4')(x)
+    # x = TimeDistributed(Dropout(dropout), name='dropout_4')(x)
 
     # Output layer with softmax
     y_pred = TimeDistributed(Dense(units=output_dim, kernel_initializer=kernel_init_dense,
