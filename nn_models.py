@@ -1,6 +1,6 @@
 from keras.models import Model
 from keras.layers import Dense, SimpleRNN, LSTM, CuDNNLSTM, Bidirectional, TimeDistributed, Conv1D, ZeroPadding1D
-from keras.layers import Lambda, Input, Dropout, Masking, Flatten
+from keras.layers import Lambda, Input, Dropout, Masking, BatchNormalization
 from keras import backend as K
 
 
@@ -135,24 +135,31 @@ def cnn_brnn(units, input_dim=26, output_dim=29, dropout=0.2):
     # (batch_size * x_seq_size * mfcc_features)
     # (batch_size, steps, input_dim)
 
-    # Masking layer
-    # x = Masking(mask_value=0., name='masking')(input_data)
+    x = BatchNormalization()(input_data)
 
-    x = ZeroPadding1D(padding=(0, 2048))(input_data)
+    x = ZeroPadding1D(padding=(0, 2048))(x)
 
-    x = Conv1D(filters=units, kernel_size=5, strides=1, activation=None,
+    x = Conv1D(filters=units, kernel_size=5, strides=1, activation='relu',
                kernel_initializer=kernel_init_conv, bias_initializer=bias_init_conv)(x)
 
-    x = Conv1D(filters=units, kernel_size=5, strides=1, activation=None,
+    x = BatchNormalization()(x)
+
+    x = Conv1D(filters=units, kernel_size=5, strides=1, activation='relu',
                kernel_initializer=kernel_init_conv, bias_initializer=bias_init_conv)(x)
 
-    x = Conv1D(filters=units, kernel_size=5, strides=2, activation=None,
+    x = BatchNormalization()(x)
+
+    x = Conv1D(filters=units, kernel_size=5, strides=2, activation='relu',
                kernel_initializer=kernel_init_conv, bias_initializer=bias_init_conv)(x)
+
+    x = BatchNormalization()(x)
 
     # Bidirectional RNN (with ReLu)
     x = Bidirectional(SimpleRNN(units, activation='relu', kernel_initializer=kernel_init_rnn, dropout=0.2,
                                 bias_initializer=bias_init_rnn, return_sequences=True),
                       merge_mode='concat', name='bi_rnn')(x)
+
+    x = BatchNormalization()(x)
 
     # 1 fully connected relu layer
     x = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
