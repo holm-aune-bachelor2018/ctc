@@ -41,8 +41,8 @@ class LossCallback(Callback):
 
     def on_train_end(self, logs={}):
         test_wer = self.calc_wer(self.test_gen)
-        print "\n - Training ended, test wer: ", test_wer[1]
-        print "\nPrediction samples -"
+        print "\n - Training ended, test wer: ", test_wer[1], " -"
+        print "\nPrediction samples:"
         batch = 6
         input, output = self.validation_gen.__getitem__(batch)
 
