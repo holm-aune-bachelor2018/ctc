@@ -1,10 +1,10 @@
 # Taken from https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly.html
 # and modified to fit data
 
-import soundfile as sf
+from soundfile import read
 import numpy as np
 import data
-from librosa.feature import mfcc
+from librosa.feature import mfcc, melspectrogram
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import Sequence
 from random import shuffle as shuf
@@ -32,19 +32,23 @@ class DataGenerator(Sequence):
         See https://keras.io/utils/ - Sequence for more details on using Sequence
 
     """
-    n_mels = 40  # mel bands per filterbank
 
-    def __init__(self, df, batch_size, frame_length, hop_length, mfcc_features=26, epoch_length=0, shuffle=True):
+    def __init__(self, df, feature_type='mfcc', batch_size=32, frame_length=320, hop_length=160, n_mels=40,
+                 mfcc_features=26, epoch_length=0, shuffle=True):
         self.df = df.copy()
+        self.type = feature_type
         self.batch_size = batch_size
         self.frame_length = frame_length
         self.hop_length = hop_length
         self.mfcc_features = mfcc_features
+        self.n_mels = n_mels
         self.epoch_length = epoch_length
         self.shuffle = shuffle
 
         # Initializing indexes
         self.indexes = np.arange(len(self.df))
+
+        del df
 
     def __len__(self):
         """Denotes the number of batches per epoch"""
@@ -82,7 +86,8 @@ class DataGenerator(Sequence):
         x_data_raw, y_data_raw, sr = self.load_audio(indexes_in_batch)
 
         # Preprocess and pad data
-        x_data, input_length = self.extract_mfcc_and_pad(x_data_raw, sr)
+
+        x_data, input_length = self.extract_features_and_pad(x_data_raw, sr)
         y_data, label_length = convert_and_pad_transcripts(y_data_raw)
 
         # print "\nx_data shape: ", x_data.shape
@@ -111,7 +116,7 @@ class DataGenerator(Sequence):
 
             # Read sound data
             path = self.df.iloc[i]['filename']
-            frames, sr = sf.read(path)
+            frames, sr = read(path)
             x_data_raw.append(frames)
 
             # Read transcript data
@@ -120,22 +125,45 @@ class DataGenerator(Sequence):
 
         return x_data_raw, y_data_raw, sr
 
-    def extract_mfcc_and_pad(self, x_data_raw, sr):
+    def extract_features_and_pad(self, x_data_raw, sr):
 
         # Finds longest frame in batch for padding
         max_x_length = self.get_seq_size(max(x_data_raw, key=len), sr)
-        x_data = np.empty([0, max_x_length, self.mfcc_features])
-        len_x_seq = []
 
-        # Extract mfcc features and pad so every frame-sequence is equal max_x_length
-        for i in range(0, len(x_data_raw)):
-            x, x_len = self.mfcc(x_data_raw[i], sr, max_x_length)
-            x_data = np.insert(x_data, i, x, axis=0)
-            len_x_seq.append(x_len - 2)  # -2 because ctc discards the first two outputs of the rnn network
+        if self.type == 'mfcc':
+            x_data = np.empty([0, max_x_length, self.mfcc_features])
+            len_x_seq = []
 
-        # Convert input length list to numpy array
-        input_length = np.array(len_x_seq)
-        return x_data, input_length
+            # Extract mfcc features and pad so every frame-sequence is equal max_x_length
+            for i in range(0, len(x_data_raw)):
+                if self.type == 'mfcc':
+                    x, x_len = self.mfcc(x_data_raw[i], sr, max_x_length)
+                elif self.type == 'spectogram':
+                    x, x_len = self.spectogram(x_data_raw[i], sr, max_x_length)
+
+                x_data = np.insert(x_data, i, x, axis=0)
+                len_x_seq.append(x_len - 2)  # -2 because ctc discards the first two outputs of the rnn network
+
+            # Convert input length list to numpy array
+            input_length = np.array(len_x_seq)
+            return x_data, input_length
+
+        elif self.type == 'spectogram':
+            x_data = np.empty([0, max_x_length, self.n_mels])
+            len_x_seq = []
+
+            # Extract mfcc features and pad so every frame-sequence is equal max_x_length
+            for i in range(0, len(x_data_raw)):
+                x, x_len = self.spectogram(x_data_raw[i], sr, max_x_length)
+                x_data = np.insert(x_data, i, x, axis=0)
+                len_x_seq.append(x_len - 2)  # -2 because ctc discards the first two outputs of the rnn network
+
+            # Convert input length list to numpy array
+            input_length = np.array(len_x_seq)
+            return x_data, input_length
+
+        else:
+            raise ValueError('Not a valid feature type: ', self.type)
 
     def mfcc(self, frames, sr, max_pad_length):
         """
@@ -161,6 +189,15 @@ class DataGenerator(Sequence):
 
         return mfcc_frames, x_length
 
+    def spectogram(self, frames, sr, max_pad_length):
+        spectogram = melspectrogram(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length, n_mels=self.n_mels)
+        x_length = spectogram.shape[1]
+        spectogram_padded = pad_sequences(spectogram, maxlen=max_pad_length, dtype='float',
+                                          padding='post', truncating='post')
+        spectogram_padded = spectogram_padded.T
+
+        return spectogram_padded, x_length
+
     def get_seq_size(self, frames, sr):
         """
         Get audio sequence size of audio converted to mfcc-features
@@ -172,9 +209,18 @@ class DataGenerator(Sequence):
         Returns:
             int: sequence size of mfcc-converted audio
         """
-        mfcc_frames = mfcc(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
-                           n_mfcc=self.mfcc_features, n_mels=self.n_mels)
-        return mfcc_frames.shape[1]
+        if self.type == 'mfcc':
+            mfcc_frames = mfcc(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
+                               n_mfcc=self.mfcc_features, n_mels=self.n_mels)
+            return mfcc_frames.shape[1]
+
+        elif self.type == 'spectogram':
+            spectogram = melspectrogram(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
+                                        n_mels=self.n_mels)
+            return spectogram.shape[1]
+
+        else:
+            raise ValueError('Not a valid feature type: ', self.type)
 
 
 def convert_and_pad_transcripts(y_data_raw):
