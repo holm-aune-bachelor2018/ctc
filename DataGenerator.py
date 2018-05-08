@@ -136,11 +136,7 @@ class DataGenerator(Sequence):
 
             # Extract mfcc features and pad so every frame-sequence is equal max_x_length
             for i in range(0, len(x_data_raw)):
-                if self.type == 'mfcc':
-                    x, x_len = self.mfcc(x_data_raw[i], sr, max_x_length)
-                elif self.type == 'spectogram':
-                    x, x_len = self.spectogram(x_data_raw[i], sr, max_x_length)
-
+                x, x_len = self.mfcc(x_data_raw[i], sr, max_x_length)
                 x_data = np.insert(x_data, i, x, axis=0)
                 len_x_seq.append(x_len - 2)  # -2 because ctc discards the first two outputs of the rnn network
 
