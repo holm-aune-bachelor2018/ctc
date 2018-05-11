@@ -353,7 +353,7 @@ def cnn_brnn(units, input_dim=26, output_dim=29, dropout=0.2):
     """
 
     dtype = 'float32'
-    numb_of_rnn = 3
+    numb_of_lstm = 3
     batch_norm = False
 
     # kernel and bias initializers for fully connected dense layers
@@ -395,14 +395,14 @@ def cnn_brnn(units, input_dim=26, output_dim=29, dropout=0.2):
     if batch_norm: x = BatchNormalization(name='batchnorm_4')(x)
 
     # Deep RNN network with a default of 3 layers, dropout 20% on non-recurrent parameters
-    # for i in range(0, numb_of_rnn):
-    #    x = CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
-    #                  return_sequences=True, name=('deep_LSTM_' + str(i + 1)))(x)
+    for i in range(0, numb_of_lstm):
+        x = CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
+                      return_sequences=True, name=('deep_LSTM_' + str(i + 1)))(x)
 
     # Bidirectional LSTM
-    x = Bidirectional(CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
-                                unit_forget_bias=True, return_sequences=True),
-                      merge_mode='sum', name='CuDNN_bi_lstm')(x)
+    # x = Bidirectional(CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
+    #                            unit_forget_bias=True, return_sequences=True),
+    #                  merge_mode='sum', name='CuDNN_bi_lstm')(x)
     if batch_norm: x = BatchNormalization(name='batchnorm_5')(x)
 
     # 1 fully connected relu layer
