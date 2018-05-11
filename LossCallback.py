@@ -8,7 +8,6 @@ import pandas
 
 
 class LossCallback(Callback):
-
     def __init__(self, test_func, validation_gen, test_gen, model, checkpoint, path_to_save, log_file_path):
         self.test_func = test_func
         self.validation_gen = validation_gen
@@ -40,8 +39,16 @@ class LossCallback(Callback):
         self.values = []
 
     def on_train_end(self, logs={}):
-        test_wer = self.calc_wer(self.test_gen)
-        print "\n - Training ended, test wer: ", test_wer[1], " -"
+        try:
+            test_wer = self.calc_wer(self.test_gen)
+            print "\n - Training ended, test wer: ", test_wer[1], " -"
+        except (Exception, ArithmeticError) as e:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            print message, "\nTest batch 0 contains... :"
+            print self.test_gen.__getitem__(0)
+
+        # Print a sample of predictions, for visualisation
         print "\nPrediction samples:"
         batch = 6
         input, output = self.validation_gen.__getitem__(batch)
@@ -59,7 +66,7 @@ class LossCallback(Callback):
     def calc_wer(self, data_gen):
         out_true=[]
         out_pred=[]
-        for batch in xrange(0, data_gen.epoch_length, data_gen.batch_size):
+        for batch in xrange(0, data_gen.__len__(), data_gen.batch_size):
             input, output = data_gen.__getitem__(batch)
             x_data = input.get("the_input")
             y_data = input.get("the_labels")
