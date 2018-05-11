@@ -263,7 +263,7 @@ def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2):
     return network_model
 
 
-def deep_lstm(units, input_dim=26, output_dim=29, dropout=0.2):
+def deep_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_lstm = 3):
     """
         :param units: units
         :param input_dim: input_dim(mfcc_features)
@@ -308,12 +308,9 @@ def deep_lstm(units, input_dim=26, output_dim=29, dropout=0.2):
     x = TimeDistributed(Dropout(dropout), name='dropout_3')(x)
 
     # 3 LSTM layers
-    x = CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn, unit_forget_bias=True,
-                  return_sequences=True, name='CuDNN_lstm1')(x)
-    x = CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn, unit_forget_bias=True,
-                  return_sequences=True, name='CuDNN_lstm2')(x)
-    x = CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn, unit_forget_bias=True,
-                  return_sequences=True, name='CuDNN_lstm3')(x)
+    for i in range(0, numb_of_lstm):
+        x = CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn, unit_forget_bias=True,
+                      return_sequences=True, name='CuDNN_lstm'+str(i+1))(x)
 
     # 1 fully connected relu layer
     x = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
