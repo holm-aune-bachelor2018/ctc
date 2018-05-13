@@ -16,27 +16,20 @@ class LossCallback(Callback):
         self.checkpoint = checkpoint
         self.path_to_save = path_to_save
         self.log_file_path = log_file_path
+        self.values = []
         self.timestamp = datetime.now().strftime('%m-%d_%H%M') + ".csv"
 
     def on_epoch_end(self, epoch, logs={}):
         wer = self.calc_wer(self.validation_gen)
-        print " - average WER: ", wer[1]
+        print " - average WER: ", wer[1], "\n"
 
-        value_list = []
-        value_list.append(logs.get('loss'))
-        value_list.append(logs.get('val_loss'))
-        value_list.append(wer[1])
-
-        self.values.append(value_list)
+        self.values.append([logs.get('loss'), logs.get('val_loss'), wer[1]])
 
         if ((epoch+1) % self.checkpoint) == 0:
             if self.path_to_save:
                 model_to_save = Model(self.model.inputs, self.model.outputs)
                 model_to_save.save(self.path_to_save)
             self.save_log()
-
-    def on_train_begin(self, logs={}):
-        self.values = []
 
     def on_train_end(self, logs={}):
         try:
@@ -51,10 +44,10 @@ class LossCallback(Callback):
         # Print a sample of predictions, for visualisation
         print "\nPrediction samples:"
         batch = 6
-        input, output = self.validation_gen.__getitem__(batch)
+        input_data, _ = self.validation_gen.__getitem__(batch)
 
-        x_data = input.get("the_input")
-        y_data = input.get("the_labels")
+        x_data = input_data.get("the_input")
+        y_data = input_data.get("the_labels")
 
         res = max_decode(self.test_func, x_data)
         for i in range(y_data.shape[0]):
@@ -64,12 +57,12 @@ class LossCallback(Callback):
         self.save_log()
 
     def calc_wer(self, data_gen):
-        out_true=[]
-        out_pred=[]
+        out_true = []
+        out_pred = []
         for batch in xrange(0, data_gen.__len__(), data_gen.batch_size):
-            input, output = data_gen.__getitem__(batch)
-            x_data = input.get("the_input")
-            y_data = input.get("the_labels")
+            input_data, _ = data_gen.__getitem__(batch)
+            x_data = input_data.get("the_input")
+            y_data = input_data.get("the_labels")
 
             for i in y_data:
                 out_true.append("".join(int_to_text_sequence(i)))
