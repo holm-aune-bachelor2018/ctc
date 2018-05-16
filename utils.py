@@ -1,161 +1,59 @@
-# File from https://github.com/robmsmt/KerasDeepSpeech
-# which is under GNU Affero General Public License v3.0
-# File is sligthly modified to fit the current project
+from itertools import groupby
 
-from char_map import char_map, index_map
+import numpy as np
 
-import types
-
-import resource
-import tensorflow as tf
-import keras
-from keras.models import model_from_json, load_model
-import keras.backend as K
-
-import inspect
-import re
-import sys
-
-import h5py
-import yaml
-
-from nn_models import clipped_relu
-
-# these text/int characters are modified
-# from the DS2 github.com/baidu-research/ba-dls-deepspeech
-
-def text_to_int_sequence(text):
-    """ Use a character map and convert text to an integer sequence """
-    int_sequence = []
-    for c in text:
-        if c == ' ':
-            ch = char_map['<SPACE>']
-        else:
-            ch = char_map[c]
-        int_sequence.append(ch)
-    return int_sequence
-
-def int_to_text_sequence(seq):
-    """ Use a index map and convert int to a text sequence """
-    text_sequence = []
-    for c in seq:
-        if c == 28: #ctc/pad char
-            ch = ''
-        else:
-            ch = index_map[c]
-        text_sequence.append(ch)
-    return text_sequence
+from text import wers, int_to_text_sequence
 
 
-def save_trimmed_model(model, name):
+def predict_batch(data_gen, test_func, batch_index):
+    input_data, _ = data_gen.__getitem__(batch_index)
 
-    jsonfilename = str(name) + ".json"
-    weightsfilename = str(name) + ".h5"
+    x_data = input_data.get("the_input")
+    y_data = input_data.get("the_labels")
 
-    # # serialize model to JSON
-    with open(jsonfilename, "w") as json_file:
-        json_file.write(model.to_json())
+    res = max_decode(test_func, x_data)
+    predictions = []
 
-    # # serialize weights to HDF5
-    model.save_weights(weightsfilename)
+    for i in range(y_data.shape[0]):
+        original = "".join(int_to_text_sequence(y_data[i]))
+        predicted = "".join(int_to_text_sequence(res[i]))
+        predictions.append([original,predicted])
 
-    return
-
-
-def save_model(model, name):
-
-    if name:
-        jsonfilename = str(name) + "/model.json"
-        weightsfilename = str(name) + "/model.h5"
-
-        # # serialize model to JSON
-        with open(jsonfilename, "w") as json_file:
-            json_file.write(model.to_json())
-
-        print("Saving model at:", jsonfilename, weightsfilename)
-        model.save_weights(weightsfilename)
-
-        #save model as combined in single file - contrains arch/weights/config/state
-        model.save(str(name)+"/cmodel.h5")
-
-    return
+    return predictions
 
 
-def load_model_checkpoint(path, summary=True):
+def calc_wer(test_func, data_gen):
+    out_true = []
+    out_pred = []
+    for batch in xrange(0, data_gen.__len__(), data_gen.batch_size):
+        input_data, _ = data_gen.__getitem__(batch)
+        x_data = input_data.get("the_input")
+        y_data = input_data.get("the_labels")
 
-    #this is a terrible hack
-    from keras.utils.generic_utils import get_custom_objects
-    get_custom_objects().update({"clipped_relu": clipped_relu})
+        for i in y_data:
+            out_true.append("".join(int_to_text_sequence(i)))
 
-    jsonfilename = path+".json"
-    weightsfilename = path+".h5"
+        decoded = max_decode(test_func, x_data)
+        for i in decoded:
+            out_pred.append("".join(int_to_text_sequence(i)))
 
-    json_file = open(jsonfilename, 'r')
-    loaded_model_json = json_file.read()
-    json_file.close()
+    out = wers(out_true, out_pred)
 
-    K.set_learning_phase(1)
-    loaded_model = model_from_json(loaded_model_json)
-
-    # load weights into loaded model
-    loaded_model.load_weights(weightsfilename)
-    # loaded_model = load_model(path, custom_objects=custom_objects)
-
-
-    if(summary):
-        loaded_model.summary()
-
-    return loaded_model
+    return out
 
 
-def load_cmodel_checkpoint(path, summary=True):
+def max_decode(test_func, x_data):
+    y_pred = test_func([x_data])[0]
 
-    #this is a terrible hack
-    from keras.utils.generic_utils import get_custom_objects
-    # get_custom_objects().update({"tf": tf})
-    get_custom_objects().update({"clipped_relu": clipped_relu})
-    # get_custom_objects().update({"TF_NewStatus": None})
+    decoded = []
+    for i in range(0,y_pred.shape[0]):
 
-    cfilename = path+".h5"
+        decoded_batch = []
+        for j in range(0,y_pred.shape[1]):
+            decoded_batch.append(np.argmax(y_pred[i][j]))
 
-    K.set_learning_phase(1)
-    loaded_model = load_model(cfilename)
+        temp = [k for k, g in groupby(decoded_batch)]
+        temp[:] = [x for x in temp if x != [28]]
+        decoded.append(temp)
 
-
-    if(summary):
-        loaded_model.summary()
-
-    return loaded_model
-
-'''
-memlist = []
-class MemoryCallback(keras.callbacks.Callback):
-    def on_epoch_end(self, epoch, log={}):
-        x = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        web_browser_debug = True
-        print(x)
-
-        if x > 40000:
-            if web_browser_debug:
-                if epoch==0:
-                    start_in_background()
-                    tr = tracker.SummaryTracker()
-                    tr.print_diff()
-            else:
-                global memlist
-                all_objects = muppy.get_objects(include_frames=True)
-                # print(len(all_objects))
-                sum1 = summary.summarize(all_objects)
-                memlist.append(sum1)
-                summary.print_(sum1)
-                if len(memlist) > 1:
-                    # compare with last - prints the difference per epoch
-                    diff = summary.get_diff(memlist[-2], memlist[-1])
-                    summary.print_(diff)
-                my_types = muppy.filter(all_objects, Type=types.ClassType)
-
-                for t in my_types:
-                    print(t)
-
-'''
-#########################################################
+    return decoded
