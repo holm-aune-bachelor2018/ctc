@@ -18,24 +18,22 @@ Work in progress
 This project uses TensorFlow (version) and Keras (version).
 
 This installation guide is for macOS and Ubuntu. 
-TensorFlow also supports Windows but we have not tested this project on TensorFlow.
+TensorFlow also supports Windows but we have not tested this project on Windows.
+1. Install Python  
+This project uses Python 2.7  
+Download and install from [Python download]
 
-1. **Install Python**  
-   This project uses Python 2.7  
-   Download and install from [Python download]
+2. Install TensorFlow  
+Install TensorFlow for Python 2.7 in a virtual environment following the [TensorFlow installation]  
+If possible, GPU installation is recommended as it speeds up training significantly.
 
-2. **Install TensorFlow**  
-   Install TensorFlow for Python 2.7 in a virtual environment following the [TensorFlow installation]  
-   If possible, GPU installation is recommended as it speeds up training significantly.
-
-3. **Install requirements**     
-   Fork the project and download, or simply clone it, and enter the downloaded directory:
+3. Install requirements  
+Fork the project and download, or simply clone it, and enter the downloaded directory:
    ```
    $ git clone https://github.com/holm-aune-bachelor2018/ctc.git
    $ cd ctc
    ```
-   
-   Ensure that the python environment where you installed TensorFlow is active and install the requirements:
+   Ensure that the python environment where you installed TensorFlow is active and install the             requirements:
    ```Ubuntu
    $ source /home/<user>/tensorflow/bin/activate
    (tensorflow) $ pip install -r requirements.txt
