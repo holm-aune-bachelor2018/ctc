@@ -5,11 +5,11 @@ import nn_models
 from keras import models
 from keras.optimizers import Adam
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
+from LossCallback import LossCallback
 from keras.utils import multi_gpu_model
 from data import combine_all_wavs_and_trans_from_csvs
 from DataGenerator import DataGenerator
 import keras.backend as K
-from LossCallback import LossCallback
 import tensorflow as tf
 from datetime import datetime
 import argparse
@@ -17,13 +17,9 @@ import argparse
 
 def main(args):
     # Path to training, validation and testing data
-    # path = "/home/<user>/ctc/data_dir/librivox-train-clean-360.csv"
-    # path_validation = "/home/<user>/ctc/data_dir/librivox-dev-clean.csv"
-    # path_test = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
-
-    path = "data_dir/librivox-dev-clean.csv"
-    path_validation = "data_dir/librivox-test-clean.csv"
-    path_test = "data_dir/librivox-test-clean.csv"
+    path = "/home/<user>/ctc/data_dir/librivox-train-clean-360.csv"
+    path_validation = "/home/<user>/ctc/data_dir/librivox-dev-clean.csv"
+    path_test = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
 
     # Create dataframes
     print "\nReading training data:"
@@ -42,6 +38,8 @@ def main(args):
     units = args.units
     learning_rate = args.lr
     dropout = args.dropout
+    feature_type = args.feature_type
+    n_mels = args.mels
 
     # Training data_params:
     model_type = args.model_type
@@ -52,15 +50,11 @@ def main(args):
     num_gpu = args.num_gpu
     shuffle = args.shuffle
     log_file = args.log_file
+    reduce_lr = args.reduce_lr              # Reduce learning rate on val_loss plateau
+    early_stopping = args.early_stopping    # Stop training early if val_loss stops improving
+    save_best = args.save_best              # Save model with best val_loss (on path "model_save" + "_best")
 
-    frequency = 16                  # Sampling rate of data in khz (LibriSpeech is 16khz)
-
-    reduce_lr = False               # Reduce learning rate on val_loss plateau
-    early_stopping = False          # Stop training early if val_loss stops improving
-    save_best = False               # Save model with best val_loss (on path "model_save" + "_best")
-
-    feature_type = 'mfcc'           # Preprocessing type; mfcc, spectogram
-    n_mels = 40                     # Number of mel-filterbanks (???)
+    frequency = 16                          # Sampling rate of data in khz (LibriSpeech is 16khz)
 
     # Data generation parameters
     data_params = {'feature_type': feature_type,
@@ -222,7 +216,7 @@ def main(args):
     except (Exception, ArithmeticError) as e:
         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
         message = template.format(type(e).__name__, e.args)
-        print (message)
+        print message
 
     finally:
         # Clear memory
@@ -233,34 +227,39 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--batchsize', type=int, default=12, help='Number of files in one batch')
-    parser.add_argument('--mfccs', type=int, default=26, help='Number of mfcc features per frame to extract')
-    parser.add_argument('--in_el', type=int, default=12, help='Number of batches per epoch. 0 trains on full dataset')
-    parser.add_argument('--epochs', type=int, default=6, help='Number of epochs')
-    parser.add_argument('--units', type=int, default=64, help='Number of hidden nodes')
-    parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
+    # Model data_params:
+    parser.add_argument('--batchsize', type=int, default=12, help='Number of files in one batch.')
+    parser.add_argument('--in_el', type=int, default=12, help='Number of batches per epoch. 0 trains on full dataset.')
+    parser.add_argument('--epochs', type=int, default=6, help='Number of epochs.')
+    parser.add_argument('--units', type=int, default=64, help='Number of hidden nodes.')
+    parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate.')
+    parser.add_argument('--feature_type', type=str, default='mfcc', help='What features to extract: mfcc, spectrogram.')
+    parser.add_argument('--mfccs', type=int, default=26, help='Number of mfcc features per frame to extract.')
+    parser.add_argument('--mels', type=int, default=40, help='Number of mels to use in feature extraction.')
+
+    # GPU
+    parser.add_argument('--num_gpu', type=int, default=2,
+                        help='No. of gpu for multi gpu training. (0,1) sets up normal training. '
+                             'Must otherwise be an even number larger than 1.')
+    # Training data_params:
     parser.add_argument('--model_type', type=str, default='dnn_brnn',
-                        help='What model to train: dnn_brnn, dnn_blstm, deep_rnn')
-    parser.add_argument('--model_save', type=str, help='Path, where to save model')
-    parser.add_argument('--model_load', type=str, default='', help='Path of existing model to load. '
-                                                                   'If empty creates new model')
-    parser.add_argument('--load_multi', type=bool, default=False, help='Load multi gpu model saved during training')
-    parser.add_argument('--shuffle', type=bool, default=True, help='Toggle shuffle batches after epoch')
-    parser.add_argument('--dropout', type=float, default=0.2, help='Set dropout value')
-    parser.add_argument('--checkpoint', type=int, default=10, help='No. of epochs before save during training')
-    parser.add_argument('--num_gpu', type=int, default=1, help='No. of gpu for multi gpu training. Must be even number')
-    parser.add_argument('--log_file', type=str, default="log", help='Path to log stats to csv file')
+                        help='What model to train: dnn_brnn, dnn_blstm, deep_rnn, deep_lstm, cnn_lstm.')
+    parser.add_argument('--model_save', type=str, help='Path, where to save model.')
+    parser.add_argument('--model_load', type=str, default='',
+                        help='Path of existing model to load. If empty creates new model.')
+    parser.add_argument('--load_multi', type=bool, default=False,
+                        help='Load multi gpu model saved during parallel GPU training.')
+    parser.add_argument('--shuffle', type=bool, default=True, help='If True, shuffle batches after each epoch.')
+    parser.add_argument('--dropout', type=float, default=0.2, help='Set dropout value (0-1).')
+    parser.add_argument('--checkpoint', type=int, default=10, help='No. of epochs before save during training.')
+    parser.add_argument('--log_file', type=str, default="log", help='Path to log stats to .csv file.')
+    parser.add_argument('--reduce_lr', type=bool, default=False,
+                        help='Reduce the learning rate if model stops improving val_loss.')
+    parser.add_argument('--early_stopping', type=bool, default=False,
+                        help='Stop the training early if val_loss stops improving.')
+    parser.add_argument('--save_best', type=bool, default=False,
+                        help='Save additional version of model only if val_loss improves.')
 
     args = parser.parse_args()
-
-    """
-    reduce_lr = False               # Reduce learning rate on val_loss plateau
-    early_stopping = False          # Stop training early if val_loss stops improving
-    save_best = False               # Save model with best val_loss (on path "model_save" + "_best")
-
-    feature_type = 'mfcc'           # Preprocessing type; mfcc, spectogram
-    n_mels = 40                     # Number of mel-filterbanks (???)
-    
-    """
 
     main(args)

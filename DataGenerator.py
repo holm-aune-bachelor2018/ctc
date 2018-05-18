@@ -86,7 +86,6 @@ class DataGenerator(Sequence):
         x_data_raw, y_data_raw, sr = self.load_audio(indexes_in_batch)
 
         # Preprocess and pad data
-
         x_data, input_length = self.extract_features_and_pad(x_data_raw, sr)
         y_data, label_length = convert_and_pad_transcripts(y_data_raw)
 
@@ -144,13 +143,13 @@ class DataGenerator(Sequence):
             input_length = np.array(len_x_seq)
             return x_data, input_length
 
-        elif self.type == 'spectogram':
+        elif self.type == 'spectrogram':
             x_data = np.empty([0, max_x_length, self.n_mels])
             len_x_seq = []
 
             # Extract mfcc features and pad so every frame-sequence is equal max_x_length
             for i in range(0, len(x_data_raw)):
-                x, x_len = self.spectogram(x_data_raw[i], sr, max_x_length)
+                x, x_len = self.melspectrogram(x_data_raw[i], sr, max_x_length)
                 x_data = np.insert(x_data, i, x, axis=0)
                 len_x_seq.append(x_len - 2)  # -2 because ctc discards the first two outputs of the rnn network
 
@@ -185,14 +184,14 @@ class DataGenerator(Sequence):
 
         return mfcc_frames, x_length
 
-    def spectogram(self, frames, sr, max_pad_length):
-        spectogram = melspectrogram(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length, n_mels=self.n_mels)
-        x_length = spectogram.shape[1]
-        spectogram_padded = pad_sequences(spectogram, maxlen=max_pad_length, dtype='float',
+    def melspectrogram(self, frames, sr, max_pad_length):
+        spectrogram = melspectrogram(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length, n_mels=self.n_mels)
+        x_length = spectrogram.shape[1]
+        spectrogram_padded = pad_sequences(spectrogram, maxlen=max_pad_length, dtype='float',
                                           padding='post', truncating='post')
-        spectogram_padded = spectogram_padded.T
+        spectrogram_padded = spectrogram_padded.T
 
-        return spectogram_padded, x_length
+        return spectrogram_padded, x_length
 
     def get_seq_size(self, frames, sr):
         """
@@ -210,10 +209,10 @@ class DataGenerator(Sequence):
                                n_mfcc=self.mfcc_features, n_mels=self.n_mels)
             return mfcc_frames.shape[1]
 
-        elif self.type == 'spectogram':
-            spectogram = melspectrogram(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
+        elif self.type == 'spectrogram':
+            spectrogram = melspectrogram(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
                                         n_mels=self.n_mels)
-            return spectogram.shape[1]
+            return spectrogram.shape[1]
 
         else:
             raise ValueError('Not a valid feature type: ', self.type)
