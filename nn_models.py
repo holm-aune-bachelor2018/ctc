@@ -1,26 +1,26 @@
 # CTC implementation from Keras example https://github.com/keras-team/keras/blob/master/examples/image_ocr.py
 
-from keras.models import Model
+from keras import backend as K
 from keras.layers import Dense, SimpleRNN, LSTM, CuDNNLSTM, Bidirectional, TimeDistributed, Conv1D, ZeroPadding1D
 from keras.layers import Lambda, Input, Dropout, Masking, BatchNormalization
-from keras import backend as K
+from keras.models import Model
 
 
-def model(model_type='default', units=512, input_dim=26, output_dim=29, dropout=0.2):
-    if model_type == 'dnn_brnn':
-        network_model = dnn_brnn(units, input_dim, output_dim, dropout)
+def model(model_type='brnn', units=512, input_dim=26, output_dim=29, dropout=0.2):
+    if model_type == 'brnn':
+        network_model = brnn(units, input_dim, output_dim, dropout)
 
-    elif model_type == 'dnn_blstm':
-        network_model = dnn_blstm(units, input_dim, output_dim, dropout)
+    elif model_type == 'blstm':
+        network_model = blstm(units, input_dim, output_dim, dropout)
 
     elif model_type == 'deep_rnn':
-        network_model = dnn_rnn(units, input_dim, output_dim, dropout)
+        network_model = deep_rnn(units, input_dim, output_dim, dropout)
 
     elif model_type == 'deep_lstm':
-        network_model = dnn_lstm(units, input_dim, output_dim, dropout)
+        network_model = deep_lstm(units, input_dim, output_dim, dropout)
 
-    elif model_type == 'cnn_lstm':
-        network_model = cnn_lstm(units, input_dim, output_dim, dropout)
+    elif model_type == 'cnn_blstm':
+        network_model = cnn_blstm(units, input_dim, output_dim, dropout)
 
     else:
         raise ValueError("Not a valid model: ", model_type)
@@ -29,7 +29,7 @@ def model(model_type='default', units=512, input_dim=26, output_dim=29, dropout=
 
 
 # Architecture from Baidu Deep speech 1
-def dnn_brnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3):
+def brnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3):
     """
     :param units: Hidden units per layer
     :param input_dim: Size of input dimension (number of features), default=26
@@ -99,7 +99,7 @@ def dnn_brnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3):
     return network_model
 
 
-def dnn_rnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, numb_of_rnn=3):
+def deep_rnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, numb_of_rnn=3):
     """
     :param units: Hidden units per layer
     :param input_dim: Size of input dimension (number of features), default=26
@@ -171,7 +171,7 @@ def dnn_rnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, nu
     return network_model
 
 
-def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, cudnn=True):
+def blstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, cudnn=True):
     """
     :param units: Hidden units per layer
     :param input_dim: Size of input dimension (number of features), default=26
@@ -253,7 +253,7 @@ def dnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, 
     return network_model
 
 
-def dnn_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, numb_of_lstm=3, cudnn=True):
+def deep_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, numb_of_lstm=3, cudnn=True):
     """
     :param units: Hidden units per layer
     :param input_dim: Size of input dimension (number of features), default=26
@@ -332,17 +332,16 @@ def dnn_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, n
     return network_model
 
 
-def cnn_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_lstm=3):
+def cnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2, seq_padding=2176):
     """
     :param units: Hidden units per layer
     :param input_dim: Size of input dimension (number of features), default=26
     :param output_dim: Output dim of final layer of model (input to CTC layer), default=29
     :param dropout: Dropout percentage, default=0.2
-    :param numb_of_lstm: Number of LSTM layers, default=3
+    :param seq_padding: length of sequence zero padding before conv layers, default=2176
     :return: cnn_blstm model
 
     Model contains:
-     1 layer of masking
      3 layers of CNN Conv1D
      3 layers of LSTM
      1 layers of fully connected clipped ReLu (DNN) with dropout 20 % between each layer
@@ -351,13 +350,14 @@ def cnn_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_lstm=3):
 
     # Input data type
     dtype = 'float32'
-    batch_norm = False
 
-    # Kernel and bias initializers for fully connected dense layers
+    activation_conv = 'relu'
+
+    # Kernel and bias initializers for fully connected dense layer
     kernel_init_dense = 'random_normal'
     bias_init_dense = 'random_normal'
 
-    # Kernel and bias initializers for recurrent layer
+    # Kernel and bias initializers for convolution layers
     kernel_init_conv = 'glorot_uniform'
     bias_init_conv = 'random_normal'
 
@@ -366,40 +366,28 @@ def cnn_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_lstm=3):
     bias_init_rnn = 'random_normal'
 
     # ---- Network model ----
-    # x_input layer, dim: (batch_size * x_seq_size * features)
     input_data = Input(name='the_input', shape=(None, input_dim), dtype=dtype)
 
-    if batch_norm:
-        x = BatchNormalization(name='batchnorm_input_data')(input_data)
-    else:
-        x = input_data
-
     # Pad on sequence dim so all sequences are equal length
-    x = ZeroPadding1D(padding=(0, 2176))(x)
+    x = ZeroPadding1D(padding=(0, seq_padding))(input_data)
 
     # 3 x 1D convolutional layers with strides (1, 1, 2)
-    x = Conv1D(filters=units, kernel_size=5, strides=1, activation='relu',
+    x = Conv1D(filters=units, kernel_size=5, strides=1, activation=activation_conv,
                kernel_initializer=kernel_init_conv, bias_initializer=bias_init_conv, name='conv_1')(x)
     x = TimeDistributed(Dropout(dropout), name='dropout_1')(x)
 
-    x = Conv1D(filters=units, kernel_size=5, strides=1, activation='relu',
+    x = Conv1D(filters=units, kernel_size=5, strides=1, activation=activation_conv,
                kernel_initializer=kernel_init_conv, bias_initializer=bias_init_conv, name='conv_2')(x)
     x = TimeDistributed(Dropout(dropout), name='dropout_2')(x)
 
-    x = Conv1D(filters=units, kernel_size=5, strides=2, activation='relu',
+    x = Conv1D(filters=units, kernel_size=5, strides=2, activation=activation_conv,
                kernel_initializer=kernel_init_conv, bias_initializer=bias_init_conv, name='conv_3')(x)
     x = TimeDistributed(Dropout(dropout), name='dropout_3')(x)
-    if batch_norm: x = BatchNormalization(name='batchnorm_lstm_input')(x)
-
-    # Deep LSTM network with a default of 3 layers
-    for i in range(0, numb_of_lstm):
-        x = CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
-                      unit_forget_bias=True, return_sequences=True, name='CuDNN_lstm' + str(i + 1))(x)
 
     # Bidirectional LSTM
-    # x = Bidirectional(CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
-    #                            unit_forget_bias=True, return_sequences=True),
-    #                  merge_mode='sum', name='CuDNN_bi_lstm')(x)
+    x = Bidirectional(CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
+                                unit_forget_bias=True, return_sequences=True),
+                      merge_mode='sum', name='CuDNN_bi_lstm')(x)
 
     # 1 fully connected layer DNN ReLu with default 20% dropout
     x = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
