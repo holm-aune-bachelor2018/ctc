@@ -10,8 +10,6 @@ Table of Contents
 
 <a name="project"/>
 
-<br>
-
 ## Project
 Work in progress
 
@@ -116,47 +114,47 @@ Parameters for train.py
 
 **Training params** <br>
 ```
---batch_size: Number of files in one batch. Default=32<br>
---epoch_len: Number of batches per epoch. 0 trains on full dataset. Default=32<br>
---epochs: Number of epochs to train. Default=10<br>
---lr: Learning rate. Default=0.0001<br>
---log_file: Path to log stats to .csv file. Default='logs'<br><br>
+--batch_size: Number of files in one batch. Default=32
+--epoch_len: Number of batches per epoch. 0 trains on full dataset. Default=32
+--epochs: Number of epochs to train. Default=10
+--lr: Learning rate. Default=0.0001
+--log_file: Path to log stats to .csv file. Default='logs'
 ```
 
 **Multi GPU or single GPU / CPU training** <br>
 ```
 --num_gpu: No. of gpu for training. (0,1) sets up training for one GPU or for CPU.
-           MultiGPU training must be an even number larger than 1. Default=1<br><br>
+           MultiGPU training must be an even number larger than 1. Default=1
 ```
 
 **Preprocessing params**<br>
 ```
---feature_type: What features to extract: mfcc, spectrogram. Default='mfcc'<br>
---mfccs: Number of mfcc features per frame to extract. Default=26<br>
---mels: Number of mels to use in feature extraction. Default=40<br><br>
+--feature_type: What features to extract: mfcc, spectrogram. Default='mfcc'
+--mfccs: Number of mfcc features per frame to extract. Default=26
+--mels: Number of mels to use in feature extraction. Default=40
 ```
 
 **Model params**<br>
 ```
---model_type: What model to train: brnn, blstm, deep_rnn, deep_lstm, cnn_blstm. Default='brnn'<br>
---units: Number of hidden nodes. Default=256<br>
---dropout: Set dropout value (0-1). Default=0.2<br><br>
+--model_type: What model to train: brnn, blstm, deep_rnn, deep_lstm, cnn_blstm. Default='brnn'
+--units: Number of hidden nodes. Default=256
+--dropout: Set dropout value (0-1). Default=0.2
 ```
 
 **Saving and loading model params**<br>
 ```
---model_save: Path, where to save model.<br>
---checkpoint: No. of epochs before save during training. Default=10<br>
---model_load: Path of existing model to load. If empty creates new model.<br>
---load_multi: Load multi gpu model saved during parallel GPU training. Default=False<br><br>
+--model_save: Path, where to save model.
+--checkpoint: No. of epochs before save during training. Default=10
+--model_load: Path of existing model to load. If empty creates new model.
+--load_multi: Load multi gpu model saved during parallel GPU training. Default=False
 ```
 
 **Additional training settings**<br>
 ```
---save_best_val: Save additional version of model if val_loss improves. Defalt=False<br>
---shuffle_indexes: If True, shuffle batches after each epoch. Default=False<br>
---reduce_lr: Reduce the learning rate if model stops improving val_loss. Default=False<br>
---early_stopping: Stop the training early if val_loss stops improving. Default=False<br><br>
+--save_best_val: Save additional version of model if val_loss improves. Defalt=False
+--shuffle_indexes: If True, shuffle batches after each epoch. Default=False
+--reduce_lr: Reduce the learning rate if model stops improving val_loss. Default=False
+--early_stopping: Stop the training early if val_loss stops improving. Default=False
 ```
 
 <a name="licence"/>
