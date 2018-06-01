@@ -47,6 +47,8 @@ def main(args):
     model_type = args.model_type
     units = args.units
     dropout = args.dropout
+    n_layers = args.layers
+
 
     # Saving and loading params
     model_save = args.model_save
@@ -126,7 +128,7 @@ def main(args):
             with tf.device('/cpu:0'):
                 # Create new model
                 model = nn_models.model(model_type=model_type, units=units, input_dim=input_dim,
-                                        output_dim=output_dim, dropout=dropout, cudnn=cudnnlstm)
+                                        output_dim=output_dim, dropout=dropout, cudnn=cudnnlstm, n_layers=n_layers)
                 print "Creating new model: ", model_type
 
         # Loss callback parameters
@@ -265,6 +267,7 @@ if __name__ == '__main__':
                         help='Number of hidden nodes.')
     parser.add_argument('--dropout', type=float, default=0.2,
                         help='Set dropout value (0-1).')
+    parser.add_argument('--layers', type=int, default=1, help='Number of recurrent or deep layers.')
 
     # Saving and loading model params:
     parser.add_argument('--model_save', type=str,
