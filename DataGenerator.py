@@ -1,13 +1,16 @@
-# Taken from https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly.html
+# Based on tutorial: https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly.html
 # and modified to fit data
 
-from soundfile import read
+from random import shuffle as shuf
+
 import numpy as np
-import data
-from librosa.feature import mfcc, melspectrogram
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import Sequence
-from random import shuffle as shuf
+from librosa.feature import mfcc, melspectrogram
+from soundfile import read
+
+import data
+
 
 # import librosa.display
 # import matplotlib.pyplot as plt
@@ -48,8 +51,6 @@ class DataGenerator(Sequence):
         # Initializing indexes
         self.indexes = np.arange(len(self.df))
 
-        del df
-
     def __len__(self):
         """Denotes the number of batches per epoch"""
         if (self.epoch_length == 0) | (self.epoch_length > int(np.floor(self.df.shape[0]/self.batch_size))):
@@ -89,6 +90,8 @@ class DataGenerator(Sequence):
         x_data, input_length = self.extract_features_and_pad(x_data_raw, sr)
         y_data, label_length = convert_and_pad_transcripts(y_data_raw)
 
+        del x_data_raw
+        del y_data_raw
         # print "\nx_data shape: ", x_data.shape
         # print "y_data shape: ", y_data.shape
         # print "input_length shape: ", input_length.shape
