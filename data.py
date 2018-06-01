@@ -1,12 +1,12 @@
-# From https://github.com/robmsmt/KerasDeepSpeech
+# File from https://github.com/robmsmt/KerasDeepSpeech
+# which is under GNU Affero General Public License v3.0
 
-import fnmatch
 import os
-import pandas as pd
-from char_map import char_map, index_map
-from text import text_to_int_sequence, int_to_text_sequence
-#from utils import text_to_int_sequence
 
+import pandas as pd
+
+from char_map import char_map
+from text import text_to_int_sequence
 
 #######################################################
 
@@ -74,8 +74,6 @@ def combine_all_wavs_and_trans_from_csvs(csvslist, sortagrad=True, createwordlis
     # 6300 TIMIT
     # (4620, 840, 840) TIMIT
 
-
-
     ## SIZE CHECKS
     max_intseq_length = get_max_intseq(comb)
     num_classes = get_number_of_char_classes()
@@ -135,6 +133,7 @@ def get_words(comb):
 
     return all_words, max_trans_charlength
 
+
 def get_max_intseq(comb):
     max_intseq_length = 0
     for x in comb:
@@ -145,6 +144,7 @@ def get_max_intseq(comb):
         except:
             print("error at:", x)
     return max_intseq_length
+
 
 def get_number_of_char_classes():
     ## TODO would be better to check with dataset (once cleaned)
