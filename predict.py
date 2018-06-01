@@ -1,6 +1,3 @@
-# !/home/anitakau/envs/tensorflow-workq/bin/python
-# !/home/marith1/envs/tensorflow/bin/python
-
 import argparse
 
 import keras.backend as K
@@ -13,9 +10,7 @@ from utils import predict_batch, calc_wer
 
 
 def main(args):
-    args.model_load = "models/testing_pred"
     try:
-
         if not args.model_load:
             raise ValueError()
         audio_dir = args.audio_dir
@@ -119,22 +114,21 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-
+    # audio_dir, batch_size, batch_index, calc_wer, feature_type, mfccs, mels, model_load, load_multi
     # Predict data params:
     parser.add_argument('--audio_dir', type=str, default="data_dir/librivox-test-clean.csv",
                         help='Path to .csv file of audio to predict')
-    parser.add_argument('--batch_size', type=int, default=10,
+    parser.add_argument('--batch_size', type=int, default=64,
                         help='Number of files to predict.')
-    parser.add_argument('--batch_index', type=int, default=0,
-                        help='Index of batch in .csv file to predict.')
-    parser.add_argument('--calc_wer', type=bool, default=True,
+    parser.add_argument('--batch_index', type=int, default=10,
+                        help='Index of batch in sorted .csv file to predict.')
+    parser.add_argument('--calc_wer', type=bool, default=False,
                         help='Whether to calculate the word error rate on the data in audio_dir.')
 
-    # Only need to specify these if feature params are changed from default
+    # Only need to specify these if feature params are changed from default (different than 26 MFCC and 40 mels)
     parser.add_argument('--feature_type', type=str,
                         help='What features to extract: mfcc, spectrogram. '
                              'If none is specified it tries to detect feature type from input_shape.')
-
     parser.add_argument('--mfccs', type=int, default=26,
                         help='Number of mfcc features per frame to extract.')
     parser.add_argument('--mels', type=int, default=40,
@@ -143,7 +137,7 @@ if __name__ == '__main__':
     # Model load params:
     parser.add_argument('--model_load', type=str,
                         help='Path of existing model to load.')
-    parser.add_argument('--load_multi', type=bool, default=False,
+    parser.add_argument('--load_multi', type=bool, default=True,
                         help='Load multi gpu model saved during parallel GPU training.')
 
     args = parser.parse_args()

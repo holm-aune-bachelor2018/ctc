@@ -1,15 +1,17 @@
 from char_map import char_map, index_map
-import re
 
-"""
-Collection of methods that modify/transform text
-"""
+# Following algorithm is adapted from: github.com/baidu-research/ba-dls-deepspeech
+# Which is under the Apache License:
+#    Copyright 2015-2016 Baidu USA LLC.  All rights reserved.
 
+#    Apache License
+#    Version 2.0, January 2004
+#    http://www.apache.org/licenses/
 
-# Following code is adapted from: github.com/baidu-research/ba-dls-deepspeech
-# which is under Apache-2.0 lincense.
 # The methods are slightly modified to fit the project
 
+
+# Collection of methods that modify/transform text
 def text_to_int_sequence(text):
     """ Use a character map and convert text to an integer sequence """
     int_sequence = []
@@ -23,11 +25,10 @@ def text_to_int_sequence(text):
 
 
 def int_to_text_sequence(seq):
-    ''' Use a index map and convert int to a text sequence
-    '''
+    """ Use a index map and convert int to a text sequence """
     text_sequence = []
     for c in seq:
-        if c == 28: #ctc/pad char
+        if c == 28: # ctc/pad char
             ch = ''
         else:
             ch = index_map[c]
@@ -35,10 +36,14 @@ def int_to_text_sequence(seq):
     return text_sequence
 
 
-# Word error rate
 # Following code is adapted from github.com/mozilla/DeepSpeech
+# mozilla/DeepSpeech is licensed under the
+# Mozilla Public License 2.0
+
+# Word error rate
+
 def wer(original, result):
-    r"""
+    """
     The WER is defined as the editing/Levenshtein distance on word level
     divided by the amount of words in the original text.
     In case of the original having more words (N) than the result and both

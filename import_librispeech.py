@@ -1,5 +1,10 @@
-# SCRIPT: MOZILLA DEEPSPEECH
 """
+Taken from https://github.com/mozilla/DeepSpeech
+
+mozilla/DeepSpeech is licensed under the
+Mozilla Public License 2.0
+
+LibriSpeech
     NAME    : LibriSpeech SLR 12
     URL     : http://www.openslr.org/12/
     HOURS   : 1,000
@@ -7,7 +12,6 @@
     AUTHORS : Vassil Panayotov et al
     TYPE    : FREE
     LICENCE : CC BY 4.0
-
 
 Modified slightly to generate .flac in stead of .wav
 """
