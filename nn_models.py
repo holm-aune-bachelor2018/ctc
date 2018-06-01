@@ -1,4 +1,4 @@
-# CTC implementation from Keras example https://github.com/keras-team/keras/blob/master/examples/image_ocr.py
+# CTC implementation from Keras example found at https://github.com/keras-team/keras/blob/master/examples/image_ocr.py
 
 from keras import backend as K
 from keras.layers import Dense, SimpleRNN, LSTM, CuDNNLSTM, Bidirectional, TimeDistributed, Conv1D, ZeroPadding1D
@@ -6,21 +6,21 @@ from keras.layers import Lambda, Input, Dropout, Masking, BatchNormalization
 from keras.models import Model
 
 
-def model(model_type='brnn', units=512, input_dim=26, output_dim=29, dropout=0.2, cudnn=False):
+def model(model_type='brnn', units=512, input_dim=26, output_dim=29, dropout=0.2, cudnn=False, n_layers=1):
     if model_type == 'brnn':
         network_model = brnn(units, input_dim, output_dim, dropout)
 
     elif model_type == 'blstm':
-        network_model = blstm(units, input_dim, output_dim, dropout, cudnn=cudnn)
+        network_model = blstm(units, input_dim, output_dim, dropout, cudnn=cudnn, n_layers=n_layers)
 
     elif model_type == 'deep_rnn':
-        network_model = deep_rnn(units, input_dim, output_dim, dropout)
+        network_model = deep_rnn(units, input_dim, output_dim, dropout, n_layers=n_layers)
 
     elif model_type == 'deep_lstm':
-        network_model = deep_lstm(units, input_dim, output_dim, dropout, cudnn=cudnn)
+        network_model = deep_lstm(units, input_dim, output_dim, dropout, cudnn=cudnn, n_layers=n_layers)
 
     elif model_type == 'cnn_blstm':
-        network_model = cnn_blstm(units, input_dim, output_dim, dropout, cudnn=cudnn)
+        network_model = cnn_blstm(units, input_dim, output_dim, dropout, cudnn=cudnn, n_layers=n_layers)
 
     else:
         raise ValueError("Not a valid model: ", model_type)
@@ -28,7 +28,7 @@ def model(model_type='brnn', units=512, input_dim=26, output_dim=29, dropout=0.2
     return network_model
 
 
-# Architecture from Baidu Deep speech 1
+# Architecture from Baidu Deep speech: Scaling up end-to-end speech recognition (https://arxiv.org/pdf/1412.5567.pdf)
 def brnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3):
     """
     :param units: Hidden units per layer
@@ -99,14 +99,14 @@ def brnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3):
     return network_model
 
 
-def deep_rnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, numb_of_rnn=3):
+def deep_rnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, n_layers=3):
     """
     :param units: Hidden units per layer
     :param input_dim: Size of input dimension (number of features), default=26
     :param output_dim: Output dim of final layer of model (input to CTC layer), default=29
     :param dropout: Dropout percentage, default=0.2
     :param numb_of_dense: Number of fully connected layers before recurrent, default=3
-    :param numb_of_rnn: Number of simple RNN layers, default=3
+    :param n_layers: Number of simple RNN layers, default=3
     :return: dnn_drnn model
 
     Model contains:
@@ -143,7 +143,7 @@ def deep_rnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, n
         x = TimeDistributed(Dropout(dropout), name='dropout_'+str(i+1))(x)
 
     # Deep RNN network with a default of 3 layers
-    for i in range(0, numb_of_rnn):
+    for i in range(0, n_layers):
         x = SimpleRNN(units, activation='relu', kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
                       dropout=dropout, return_sequences=True, name=('deep_rnn_'+ str(i+1)))(x)
 
@@ -171,7 +171,7 @@ def deep_rnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, n
     return network_model
 
 
-def blstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, cudnn=True):
+def blstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, cudnn=True, n_layers=1):
     """
     :param units: Hidden units per layer
     :param input_dim: Size of input dimension (number of features), default=26
@@ -179,6 +179,7 @@ def blstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, cudn
     :param dropout: Dropout percentage, default=0.2
     :param numb_of_dense: Number of fully connected layers before recurrent, default=3
     :param cudnn: Whether to use the CuDNN optimized LSTM (only for GPU), default=True
+    :param n_layers: Number of stacked BLSTM layers, default=1
     :return: dnn_blstm model
 
     Model contains:
@@ -221,13 +222,15 @@ def blstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, cudn
     # Bidirectional RNN (with ReLu)
     # If running on GPU, use the CuDNN optimised LSTM model
     if cudnn:
-        x = Bidirectional(CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
-                                    unit_forget_bias=True, return_sequences=True),
-                          merge_mode='sum', name='CuDNN_bi_lstm')(x)
+        for i in range(0, n_layers):
+            x = Bidirectional(CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
+                                        unit_forget_bias=True, return_sequences=True),
+                              merge_mode='sum', name=('CuDNN_bi_lstm' + str(i+1)))(x)
     else:
-        x = Bidirectional(LSTM(units, activation='relu', kernel_initializer=kernel_init_rnn, dropout=dropout,
-                               bias_initializer=bias_init_rnn, return_sequences=True),
-                          merge_mode='sum', name='bi_lstm')(x)
+        for i in range(0, n_layers):
+            x = Bidirectional(LSTM(units, activation='relu', kernel_initializer=kernel_init_rnn, dropout=dropout,
+                                   bias_initializer=bias_init_rnn, return_sequences=True),
+                              merge_mode='sum', name=('bi_lstm' + str(i+1)))(x)
 
     # 1 fully connected layer DNN ReLu with default 20% dropout
     x = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
@@ -253,14 +256,14 @@ def blstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, cudn
     return network_model
 
 
-def deep_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, numb_of_lstm=3, cudnn=True):
+def deep_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, n_layers=3, cudnn=True):
     """
     :param units: Hidden units per layer
     :param input_dim: Size of input dimension (number of features), default=26
     :param output_dim: Output dim of final layer of model (input to CTC layer), default=29
     :param dropout: Dropout percentage, default=0.2
     :param numb_of_dense: Number of fully connected layers before recurrent, default=3
-    :param numb_of_lstm: Number of LSTM layers, default=3
+    :param n_layers: Number of LSTM layers, default=3
     :param cudnn: Whether to use the CuDNN optimized LSTM (only for GPU), default=True
     :return: dnn_dlstm model
 
@@ -300,11 +303,11 @@ def deep_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, 
 
     # Default 3 LSTM layers
     if cudnn:
-        for i in range(0, numb_of_lstm):
+        for i in range(0, n_layers):
             x = CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
                           unit_forget_bias=True, return_sequences=True, name='CuDNN_lstm'+str(i+1))(x)
     else:
-        for i in range(0, numb_of_lstm):
+        for i in range(0, n_layers):
             x = LSTM(units, activation='relu', kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
                      dropout=dropout, return_sequences=True, name='lstm'+str(i+1))(x)
 
@@ -332,13 +335,14 @@ def deep_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, 
     return network_model
 
 
-def cnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2, seq_padding=2176):
+def cnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2, seq_padding=2176, cudnn=True, n_layers=1):
     """
     :param units: Hidden units per layer
     :param input_dim: Size of input dimension (number of features), default=26
     :param output_dim: Output dim of final layer of model (input to CTC layer), default=29
     :param dropout: Dropout percentage, default=0.2
     :param seq_padding: length of sequence zero padding before conv layers, default=2176
+    :param n_layers: Number of stacked blstm layers, default=1
     :return: cnn_blstm model
 
     Model contains:
@@ -385,9 +389,16 @@ def cnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2, seq_padding=2176)
     x = TimeDistributed(Dropout(dropout), name='dropout_3')(x)
 
     # Bidirectional LSTM
-    x = Bidirectional(CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
-                                unit_forget_bias=True, return_sequences=True),
-                      merge_mode='sum', name='CuDNN_bi_lstm')(x)
+    if cudnn:
+        for i in range(0,n_layers):
+            x = Bidirectional(CuDNNLSTM(units, kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
+                                        unit_forget_bias=True, return_sequences=True),
+                              merge_mode='sum', name='CuDNN_bi_lstm'+str(i+1))(x)
+    else:
+        for i in range(0,n_layers):
+            x = Bidirectional(LSTM(units, activation='relu', kernel_initializer=kernel_init_rnn, dropout=dropout,
+                                   bias_initializer=bias_init_rnn, return_sequences=True),
+                              merge_mode='sum', name='bi_lstm'+str(i+1))(x)
 
     # 1 fully connected layer DNN ReLu with default 20% dropout
     x = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
@@ -424,6 +435,6 @@ def ctc_lambda_func(args):
     return K.ctc_batch_cost(labels, y_pred, input_length, label_length)
 
 
-# Returns clipped relu, clip value set to 20 (value from Baidu Deep speech 1)
+# Returns clipped relu, clip value set to 20.
 def clipped_relu(value):
     return K.relu(value, max_value=20)

@@ -13,6 +13,8 @@ Table of Contents
 ## Project
 Work in progress
 
+<br>
+
 <a name="installation"/>
 
 ## Installation
@@ -45,6 +47,8 @@ Fork the project and download, or simply clone it, and enter the downloaded dire
 As per Keras (version), there is a bug when trying to save the model during training when using the multi_gpu_model().  
 Please refer to this [Multi-GPU Model Keras guide] regarding how to save and load a multi-GPU model, including a work-around for the bug.
 
+<br>
+
 <a name="running"/>
 
 ## Running
@@ -58,14 +62,14 @@ This will download 55 GB of speech data into the data_dir directory
 (tensorflow) $ import_librispeech.py data_dir 
 
 ```
+<br> 
 
-**Running training** 
+**Running training** <br>
 If using TensorFlow with CPU or 1 GPU, to run the training with default parameters, simply do:
 ``` 
 (tensorflow) $ train.py
 ```
-This sets up training with the default BRNN model, using a small amount of data for testing.
-
+This sets up training with the default BRNN model, using a small amount of data for testing. <br> 
 
 **Example BRNN** <br>
 Setting up a BRNN network, with 512 units, training on batch_size=64, epoch_len=256 <br>
@@ -77,28 +81,31 @@ Save the model every 10 epochs at "models/brnn_25hours.h5" <br>
 ```
 (tensorflow) $ train.py --units=512 --batch_size=64 --epoch_len=256 --epochs=50 --model_type='brnn' --model_save='models/brnn_25hours.h5' --log_file='logs/brnn_25hours'  
 ```
+<br> 
 
 **Example loading** <br>
 To continue training the same model for another 50 hours, use the model_load argument.
 ```
 (tensorflow) $ train.py --model_load='models/brnn_25hours.h5' --units=512 --batch_size=64 --epoch_len=256 --epochs=50 --model_save='models/continued_brnn_25hours.h5' --log_file='logs/continued_brnn_25hours'  
 ```
+<br> 
 
 **Parallel GPU training** <br>
 If running on multiple GPUs, enable multiGPU training:
-Must be an even number of GPUs.
 ```
 (tensorflow) $ train.py --multi_GPU=2
 ```
+Must be an even number of GPUs. <br> 
 
-**Example CuDNNLSTM**
-ONLY WORKS WITH GPU
+**Example CuDNNLSTM** <br>
+ONLY WORKS WITH GPU <br>
 With the GPU TensorFlow back you may wish to try the CuDNN optimised LSTM
 
 ```
 (tensorflow) $ train.py --model_type=blstm --cudnn=True --units=512 --batch_size=64 --epoch_len=256 --epochs=50 --model_save='models/blstm_25hours.h5' --log_file='logs/blstm_25hours'
 ```
 
+<br>
 
 <a name="params"/>
 
@@ -106,39 +113,52 @@ With the GPU TensorFlow back you may wish to try the CuDNN optimised LSTM
 Parameters for train.py
 
 **Training params** <br>
---batch_size: Number of files in one batch. Default=32<br>
---epoch_len: Number of batches per epoch. 0 trains on full dataset. Default=32<br>
---epochs: Number of epochs to train. Default=10<br>
---lr: Learning rate. Default=0.0001<br>
---log_file: Path to log stats to .csv file. Default='logs'<br><br>
+```
+--batch_size: Number of files in one batch. Default=32
+--epoch_len: Number of batches per epoch. 0 trains on full dataset. Default=32
+--epochs: Number of epochs to train. Default=10
+--lr: Learning rate. Default=0.0001
+--log_file: Path to log stats to .csv file. Default='logs'
+```
 
 **Multi GPU or single GPU / CPU training** <br>
+```
 --num_gpu: No. of gpu for training. (0,1) sets up training for one GPU or for CPU.
-           MultiGPU training must be an even number larger than 1. Default=1<br><br>
+           MultiGPU training must be an even number larger than 1. Default=1
+```
 
 **Preprocessing params**<br>
---feature_type: What features to extract: mfcc, spectrogram. Default='mfcc'<br>
---mfccs: Number of mfcc features per frame to extract. Default=26<br>
---mels: Number of mels to use in feature extraction. Default=40<br><br>
+```
+--feature_type: What features to extract: mfcc, spectrogram. Default='mfcc'
+--mfccs: Number of mfcc features per frame to extract. Default=26
+--mels: Number of mels to use in feature extraction. Default=40
+```
 
 **Model params**<br>
---model_type: What model to train: brnn, blstm, deep_rnn, deep_lstm, cnn_blstm. Default='brnn'<br>
---units: Number of hidden nodes. Default=256<br>
---dropout: Set dropout value (0-1). Default=0.2<br><br>
+```
+--model_type: What model to train: brnn, blstm, deep_rnn, deep_lstm, cnn_blstm. Default='brnn'
+--units: Number of hidden nodes. Default=256
+--dropout: Set dropout value (0-1). Default=0.2
+```
 
 **Saving and loading model params**<br>
---model_save: Path, where to save model.<br>
---checkpoint: No. of epochs before save during training. Default=10<br>
---model_load: Path of existing model to load. If empty creates new model.<br>
---load_multi: Load multi gpu model saved during parallel GPU training. Default=False<br><br>
+```
+--model_save: Path, where to save model.
+--checkpoint: No. of epochs before save during training. Default=10
+--model_load: Path of existing model to load. If empty creates new model.
+--load_multi: Load multi gpu model saved during parallel GPU training. Default=False
+```
 
 **Additional training settings**<br>
---save_best_val: Save additional version of model if val_loss improves. Defalt=False<br>
---shuffle_indexes: If True, shuffle batches after each epoch. Default=False<br>
---reduce_lr: Reduce the learning rate if model stops improving val_loss. Default=False<br>
---early_stopping: Stop the training early if val_loss stops improving. Default=False<br><br>
+```
+--save_best_val: Save additional version of model if val_loss improves. Defalt=False
+--shuffle_indexes: If True, shuffle batches after each epoch. Default=False
+--reduce_lr: Reduce the learning rate if model stops improving val_loss. Default=False
+--early_stopping: Stop the training early if val_loss stops improving. Default=False
+```
 
 <a name="licence"/>
+<br>
 
 ## Licence
 This file is part of Speech recognition with CTC in Keras.
