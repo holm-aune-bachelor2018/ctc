@@ -58,14 +58,14 @@ This will download 55 GB of speech data into the data_dir directory
 (tensorflow) $ import_librispeech.py data_dir 
 
 ```
+<br> 
 
-**Running training** 
+**Running training** <br>
 If using TensorFlow with CPU or 1 GPU, to run the training with default parameters, simply do:
 ``` 
 (tensorflow) $ train.py
 ```
-This sets up training with the default BRNN model, using a small amount of data for testing.
-
+This sets up training with the default BRNN model, using a small amount of data for testing. <br> 
 
 **Example BRNN** <br>
 Setting up a BRNN network, with 512 units, training on batch_size=64, epoch_len=256 <br>
@@ -77,22 +77,24 @@ Save the model every 10 epochs at "models/brnn_25hours.h5" <br>
 ```
 (tensorflow) $ train.py --units=512 --batch_size=64 --epoch_len=256 --epochs=50 --model_type='brnn' --model_save='models/brnn_25hours.h5' --log_file='logs/brnn_25hours'  
 ```
+<br> 
 
 **Example loading** <br>
 To continue training the same model for another 50 hours, use the model_load argument.
 ```
 (tensorflow) $ train.py --model_load='models/brnn_25hours.h5' --units=512 --batch_size=64 --epoch_len=256 --epochs=50 --model_save='models/continued_brnn_25hours.h5' --log_file='logs/continued_brnn_25hours'  
 ```
+<br> 
 
 **Parallel GPU training** <br>
 If running on multiple GPUs, enable multiGPU training:
-Must be an even number of GPUs.
 ```
 (tensorflow) $ train.py --multi_GPU=2
 ```
+Must be an even number of GPUs. <br> 
 
-**Example CuDNNLSTM**
-ONLY WORKS WITH GPU
+**Example CuDNNLSTM** <br>
+ONLY WORKS WITH GPU <br>
 With the GPU TensorFlow back you may wish to try the CuDNN optimised LSTM
 
 ```
