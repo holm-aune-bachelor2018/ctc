@@ -10,8 +10,12 @@ Table of Contents
 
 <a name="project"/>
 
+<br>
+
 ## Project
 Work in progress
+
+<br>
 
 <a name="installation"/>
 
@@ -44,6 +48,8 @@ Fork the project and download, or simply clone it, and enter the downloaded dire
 **NOTE - multi GPU training**  
 As per Keras (version), there is a bug when trying to save the model during training when using the multi_gpu_model().  
 Please refer to this [Multi-GPU Model Keras guide] regarding how to save and load a multi-GPU model, including a work-around for the bug.
+
+<br>
 
 <a name="running"/>
 
@@ -101,6 +107,7 @@ With the GPU TensorFlow back you may wish to try the CuDNN optimised LSTM
 (tensorflow) $ train.py --model_type=blstm --cudnn=True --units=512 --batch_size=64 --epoch_len=256 --epochs=50 --model_save='models/blstm_25hours.h5' --log_file='logs/blstm_25hours'
 ```
 
+<br>
 
 <a name="params"/>
 
@@ -108,39 +115,52 @@ With the GPU TensorFlow back you may wish to try the CuDNN optimised LSTM
 Parameters for train.py
 
 **Training params** <br>
+```
 --batch_size: Number of files in one batch. Default=32<br>
 --epoch_len: Number of batches per epoch. 0 trains on full dataset. Default=32<br>
 --epochs: Number of epochs to train. Default=10<br>
 --lr: Learning rate. Default=0.0001<br>
 --log_file: Path to log stats to .csv file. Default='logs'<br><br>
+```
 
 **Multi GPU or single GPU / CPU training** <br>
+```
 --num_gpu: No. of gpu for training. (0,1) sets up training for one GPU or for CPU.
            MultiGPU training must be an even number larger than 1. Default=1<br><br>
+```
 
 **Preprocessing params**<br>
+```
 --feature_type: What features to extract: mfcc, spectrogram. Default='mfcc'<br>
 --mfccs: Number of mfcc features per frame to extract. Default=26<br>
 --mels: Number of mels to use in feature extraction. Default=40<br><br>
+```
 
 **Model params**<br>
+```
 --model_type: What model to train: brnn, blstm, deep_rnn, deep_lstm, cnn_blstm. Default='brnn'<br>
 --units: Number of hidden nodes. Default=256<br>
 --dropout: Set dropout value (0-1). Default=0.2<br><br>
+```
 
 **Saving and loading model params**<br>
+```
 --model_save: Path, where to save model.<br>
 --checkpoint: No. of epochs before save during training. Default=10<br>
 --model_load: Path of existing model to load. If empty creates new model.<br>
 --load_multi: Load multi gpu model saved during parallel GPU training. Default=False<br><br>
+```
 
 **Additional training settings**<br>
+```
 --save_best_val: Save additional version of model if val_loss improves. Defalt=False<br>
 --shuffle_indexes: If True, shuffle batches after each epoch. Default=False<br>
 --reduce_lr: Reduce the learning rate if model stops improving val_loss. Default=False<br>
 --early_stopping: Stop the training early if val_loss stops improving. Default=False<br><br>
+```
 
 <a name="licence"/>
+<br>
 
 ## Licence
 This file is part of Speech recognition with CTC in Keras.
