@@ -1,25 +1,24 @@
-# !/home/anitakau/envs/tensorflow-workq/bin/python
-# !/home/marith1/envs/tensorflow/bin/python
+import argparse
+from datetime import datetime
 
-import nn_models
-from keras import models
-from keras.optimizers import Adam
-from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
-from LossCallback import LossCallback
-from keras.utils import multi_gpu_model
-from data import combine_all_wavs_and_trans_from_csvs
-from DataGenerator import DataGenerator
 import keras.backend as K
 import tensorflow as tf
-from datetime import datetime
-import argparse
+from keras import models
+from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
+from keras.optimizers import Adam
+from keras.utils import multi_gpu_model
+
+import nn_models
+from DataGenerator import DataGenerator
+from LossCallback import LossCallback
+from data import combine_all_wavs_and_trans_from_csvs
 
 
 def main(args):
-    # Path to training, validation and testing data
-    path = "/home/<user>/ctc/data_dir/librivox-train-clean-360.csv"
-    path_validation = "/home/<user>/ctc/data_dir/librivox-dev-clean.csv"
-    path_test = "/home/<user>/ctc/data_dir/librivox-test-clean.csv"
+    # Paths to .csv files
+    path = "data_dir/librivox-train-clean-360.csv"
+    path_validation = "data_dir/librivox-dev-clean.csv"
+    path_test = "data_dir/librivox-test-clean.csv"
 
     # Create dataframes
     print "\nReading training data:"
@@ -29,32 +28,40 @@ def main(args):
     print "\nReading test data: "
     _, test_df = combine_all_wavs_and_trans_from_csvs(path_test)
 
-    # Input parameters for script
-    # Model data_params:
-    batch_size = args.batchsize
-    mfcc_features = args.mfccs
-    input_epoch_length = args.in_el
+    # Training params:
+    batch_size = args.batch_size
+    input_epoch_length = args.epoch_len
     epochs = args.epochs
-    units = args.units
     learning_rate = args.lr
-    dropout = args.dropout
+    log_file = args.log_file
+
+    # Multi GPU or single GPU / CPU training
+    num_gpu = args.num_gpu
+
+    # Preprocessing params
     feature_type = args.feature_type
+    mfcc_features = args.mfccs
     n_mels = args.mels
 
-    # Training data_params:
+    # Model params
     model_type = args.model_type
+    units = args.units
+    dropout = args.dropout
+
+    # Saving and loading params
     model_save = args.model_save
+    checkpoint = args.checkpoint
     model_load = args.model_load
     load_multi = args.load_multi
-    checkpoint = args.checkpoint
-    num_gpu = args.num_gpu
-    shuffle = args.shuffle
-    log_file = args.log_file
+
+    # Additional settings for training
+    save_best = args.save_best_val          # Save model with best val_loss (on path "model_save" + "_best")
+    shuffle = args.shuffle_indexes
     reduce_lr = args.reduce_lr              # Reduce learning rate on val_loss plateau
     early_stopping = args.early_stopping    # Stop training early if val_loss stops improving
-    save_best = args.save_best              # Save model with best val_loss (on path "model_save" + "_best")
 
     frequency = 16                          # Sampling rate of data in khz (LibriSpeech is 16khz)
+    cudnnlstm = False
 
     # Data generation parameters
     data_params = {'feature_type': feature_type,
@@ -81,10 +88,9 @@ def main(args):
     output_dim = 29  # Output dim: features to predict + 1 for the CTC blank prediction
 
     # Optimization algorithm used to update network weights
-    eps = 1e-8  # epsilon 1e-8
-    optimizer = Adam(lr=learning_rate, epsilon=eps, clipnorm=2.0)
+    optimizer = Adam(lr=learning_rate, epsilon=1e-8, clipnorm=2.0)
 
-    # Dummy loss-function to compile model, actual CTC loss-function defined as a lambda layer in model
+    # Dummy loss-function for compiling model, actual CTC loss-function defined as a lambda layer in model
     loss = {'ctc': lambda y_true, y_pred: y_pred}
 
     # Print training data at the beginning of training
@@ -105,7 +111,7 @@ def main(args):
                 custom_objects = {'clipped_relu': nn_models.clipped_relu,
                                   '<lambda>': lambda y_true, y_pred: y_pred}
 
-                # When loading a parallel model saved *while* running on GPU, use load_multi
+                # When loading a parallel model saved *while* running on multiple GPUs, use load_multi
                 if load_multi:
                     model = models.load_model(model_load, custom_objects=custom_objects)
                     model = model.layers[-2]
@@ -120,7 +126,7 @@ def main(args):
             with tf.device('/cpu:0'):
                 # Create new model
                 model = nn_models.model(model_type=model_type, units=units, input_dim=input_dim,
-                                        output_dim=output_dim, dropout=dropout)
+                                        output_dim=output_dim, dropout=dropout, cudnn=cudnnlstm)
                 print "Creating new model: ", model_type
 
         # Loss callback parameters
@@ -140,7 +146,7 @@ def main(args):
                               'shuffle': shuffle}
 
         # Optional callbacks for added functionality
-        # Reduces learning rate when val_loss stagnates. Useful if model gets "stuck" on a plateau
+        # Reduces learning rate when val_loss stagnates.
         if reduce_lr:
             print "Reducing learning rate on plateau"
             reduce_lr_cb = ReduceLROnPlateau(factor=0.2, patience=5, verbose=0, epsilon=0.1, min_lr=0.0000001)
@@ -148,7 +154,7 @@ def main(args):
         else:
             callbacks = []
 
-        # Stops the model early if the val_loss isn't improving. Helps to prevent overfitting
+        # Stops the model early if the val_loss isn't improving
         if early_stopping:
             es_cb = EarlyStopping(min_delta=0, patience=5, verbose=0, mode='auto')
             callbacks.append(es_cb)
@@ -159,7 +165,7 @@ def main(args):
             mcp_cb = ModelCheckpoint(save_best, verbose=1, save_best_only=True, period=1)
             callbacks.append(mcp_cb)
 
-        # Train with parallel model on 2 or more gpus, must be even number
+        # Train with parallel model on 2 or more GPUs, must be even number
         if num_gpu > 1:
             if num_gpu % 2 == 0:
                 # Compile parallel model for training on GPUs > 1
@@ -227,38 +233,58 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    # Model data_params:
-    parser.add_argument('--batchsize', type=int, default=12, help='Number of files in one batch.')
-    parser.add_argument('--in_el', type=int, default=12, help='Number of batches per epoch. 0 trains on full dataset.')
-    parser.add_argument('--epochs', type=int, default=6, help='Number of epochs.')
-    parser.add_argument('--units', type=int, default=64, help='Number of hidden nodes.')
-    parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate.')
-    parser.add_argument('--feature_type', type=str, default='mfcc', help='What features to extract: mfcc, spectrogram.')
-    parser.add_argument('--mfccs', type=int, default=26, help='Number of mfcc features per frame to extract.')
-    parser.add_argument('--mels', type=int, default=40, help='Number of mels to use in feature extraction.')
+    # Training params:
+    parser.add_argument('--batch_size', type=int, default=32,
+                        help='Number of files in one batch.')
+    parser.add_argument('--epoch_len', type=int, default=32,
+                        help='Number of batches per epoch. 0 trains on full dataset.')
+    parser.add_argument('--epochs', type=int, default=10,
+                        help='Number of epochs to train.')
+    parser.add_argument('--lr', type=float, default=0.0001,
+                        help='Learning rate.')
+    parser.add_argument('--log_file', type=str, default="log",
+                        help='Path to log stats to .csv file.')
 
-    # GPU
-    parser.add_argument('--num_gpu', type=int, default=2,
-                        help='No. of gpu for multi gpu training. (0,1) sets up normal training. '
-                             'Must otherwise be an even number larger than 1.')
-    # Training data_params:
-    parser.add_argument('--model_type', type=str, default='dnn_brnn',
-                        help='What model to train: dnn_brnn, dnn_blstm, deep_rnn, deep_lstm, cnn_lstm.')
-    parser.add_argument('--model_save', type=str, help='Path, where to save model.')
+    # Multi GPU or single GPU / CPU training
+    parser.add_argument('--num_gpu', type=int, default=1,
+                        help='No. of gpu for training. (0,1) sets up normal training, for CPU or one GPU. '
+                             'MultiGPU training must be an even number larger than 1.')
+
+    # Preprocessing params
+    parser.add_argument('--feature_type', type=str, default='mfcc',
+                        help='What features to extract: mfcc, spectrogram.')
+    parser.add_argument('--mfccs', type=int, default=26,
+                        help='Number of mfcc features per frame to extract.')
+    parser.add_argument('--mels', type=int, default=40,
+                        help='Number of mels to use in feature extraction.')
+
+    # Model params
+    parser.add_argument('--model_type', type=str, default='brnn',
+                        help='What model to train: brnn, blstm, deep_rnn, deep_lstm, cnn_blstm.')
+    parser.add_argument('--units', type=int, default=256,
+                        help='Number of hidden nodes.')
+    parser.add_argument('--dropout', type=float, default=0.2,
+                        help='Set dropout value (0-1).')
+
+    # Saving and loading model params:
+    parser.add_argument('--model_save', type=str,
+                        help='Path, where to save model.')
+    parser.add_argument('--checkpoint', type=int, default=10,
+                        help='No. of epochs before save during training.')
     parser.add_argument('--model_load', type=str, default='',
                         help='Path of existing model to load. If empty creates new model.')
     parser.add_argument('--load_multi', type=bool, default=False,
                         help='Load multi gpu model saved during parallel GPU training.')
-    parser.add_argument('--shuffle', type=bool, default=True, help='If True, shuffle batches after each epoch.')
-    parser.add_argument('--dropout', type=float, default=0.2, help='Set dropout value (0-1).')
-    parser.add_argument('--checkpoint', type=int, default=10, help='No. of epochs before save during training.')
-    parser.add_argument('--log_file', type=str, default="log", help='Path to log stats to .csv file.')
+
+    # Additional training settings
+    parser.add_argument('--save_best_val', type=bool, default=False,
+                        help='Save additional version of model if val_loss improves.')
+    parser.add_argument('--shuffle_indexes', type=bool, default=True,
+                        help='If True, shuffle batches after each epoch.')
     parser.add_argument('--reduce_lr', type=bool, default=False,
                         help='Reduce the learning rate if model stops improving val_loss.')
     parser.add_argument('--early_stopping', type=bool, default=False,
                         help='Stop the training early if val_loss stops improving.')
-    parser.add_argument('--save_best', type=bool, default=False,
-                        help='Save additional version of model only if val_loss improves.')
 
     args = parser.parse_args()
 

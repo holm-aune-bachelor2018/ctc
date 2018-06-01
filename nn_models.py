@@ -6,21 +6,21 @@ from keras.layers import Lambda, Input, Dropout, Masking, BatchNormalization
 from keras.models import Model
 
 
-def model(model_type='brnn', units=512, input_dim=26, output_dim=29, dropout=0.2):
+def model(model_type='brnn', units=512, input_dim=26, output_dim=29, dropout=0.2, cudnn=False):
     if model_type == 'brnn':
         network_model = brnn(units, input_dim, output_dim, dropout)
 
     elif model_type == 'blstm':
-        network_model = blstm(units, input_dim, output_dim, dropout)
+        network_model = blstm(units, input_dim, output_dim, dropout, cudnn=cudnn)
 
     elif model_type == 'deep_rnn':
         network_model = deep_rnn(units, input_dim, output_dim, dropout)
 
     elif model_type == 'deep_lstm':
-        network_model = deep_lstm(units, input_dim, output_dim, dropout)
+        network_model = deep_lstm(units, input_dim, output_dim, dropout, cudnn=cudnn)
 
     elif model_type == 'cnn_blstm':
-        network_model = cnn_blstm(units, input_dim, output_dim, dropout)
+        network_model = cnn_blstm(units, input_dim, output_dim, dropout, cudnn=cudnn)
 
     else:
         raise ValueError("Not a valid model: ", model_type)
