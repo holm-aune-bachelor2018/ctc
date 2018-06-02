@@ -23,11 +23,7 @@ from keras.utils import Sequence
 from librosa.feature import mfcc, melspectrogram
 from soundfile import read
 
-from text import text_to_int_sequence
-
-
-# import librosa.display
-# import matplotlib.pyplot as plt
+from utils.text_utils import text_to_int_sequence
 
 
 class DataGenerator(Sequence):
@@ -98,14 +94,12 @@ class DataGenerator(Sequence):
             shuf(indexes_in_batch)
 
         # Load audio and transcripts
-        x_data_raw, y_data_raw, sr = self.load_audio(indexes_in_batch)
+        x_data_raw, y_data_raw, sr = load_audio(self.df, indexes_in_batch)
 
         # Preprocess and pad data
         x_data, input_length = self.extract_features_and_pad(x_data_raw, sr)
         y_data, label_length = convert_and_pad_transcripts(y_data_raw)
 
-        del x_data_raw
-        del y_data_raw
         # print "\nx_data shape: ", x_data.shape
         # print "y_data shape: ", y_data.shape
         # print "input_length shape: ", input_length.shape
@@ -122,27 +116,13 @@ class DataGenerator(Sequence):
 
         return inputs, outputs
 
-    def load_audio(self, indexes_in_batch):
-        sr = 0
-        x_data_raw = []
-        y_data_raw = []
-
-        # loads wav-files and transcripts
-        for i in indexes_in_batch:
-
-            # Read sound data
-            path = self.df.iloc[i]['filename']
-            frames, sr = read(path)
-            x_data_raw.append(frames)
-
-            # Read transcript data
-            y_txt = self.df.iloc[i]['transcript']
-            y_data_raw.append(y_txt)
-
-        return x_data_raw, y_data_raw, sr
-
     def extract_features_and_pad(self, x_data_raw, sr):
+        """
 
+        :param x_data_raw:
+        :param sr:
+        :return:
+        """
         # Finds longest frame in batch for padding
         max_x_length = self.get_seq_size(max(x_data_raw, key=len), sr)
 
@@ -152,7 +132,8 @@ class DataGenerator(Sequence):
 
             # Extract mfcc features and pad so every frame-sequence is equal max_x_length
             for i in range(0, len(x_data_raw)):
-                x, x_len = self.mfcc(x_data_raw[i], sr, max_x_length)
+                x, x_len = extract_mfcc_and_pad(x_data_raw[i], sr, max_x_length, self.frame_length, self.hop_length,
+                                                self.mfcc_features, self.n_mels)
                 x_data = np.insert(x_data, i, x, axis=0)
                 len_x_seq.append(x_len - 2)  # -2 because ctc discards the first two outputs of the rnn network
 
@@ -166,7 +147,8 @@ class DataGenerator(Sequence):
 
             # Extract mfcc features and pad so every frame-sequence is equal max_x_length
             for i in range(0, len(x_data_raw)):
-                x, x_len = self.melspectrogram(x_data_raw[i], sr, max_x_length)
+                x, x_len = extract_mel_spectrogram_and_pad(x_data_raw[i], sr, max_x_length, self.frame_length,
+                                                           self.hop_length, self.n_mels)
                 x_data = np.insert(x_data, i, x, axis=0)
                 len_x_seq.append(x_len - 2)  # -2 because ctc discards the first two outputs of the rnn network
 
@@ -176,39 +158,6 @@ class DataGenerator(Sequence):
 
         else:
             raise ValueError('Not a valid feature type: ', self.type)
-
-    def mfcc(self, frames, sr, max_pad_length):
-        """
-        Generates MFCC (mel frequency cepstral coefficients) and zero-pads with max_pad_length
-
-        Args:
-            frames (np.ndarray[shape=(n,)]):    audio time series
-            sr (int):                           sampling rate of frames
-            max_pad_length (int):               length (number of frames) of longest sequence in batch
-
-        Returns:
-            np.ndarray[shape=(max_seq_length, mfcc_features)]: padded mfcc features of audio time series
-            int: length of sequence before padding (input for CTC)
-        """
-
-        mfcc_frames = mfcc(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
-                           n_mfcc=self.mfcc_features, n_mels=self.n_mels)
-
-        x_length = mfcc_frames.shape[1]
-        mfcc_frames = pad_sequences(mfcc_frames, maxlen=max_pad_length, dtype='float',
-                                    padding='post', truncating='post')
-        mfcc_frames = mfcc_frames.T
-
-        return mfcc_frames, x_length
-
-    def melspectrogram(self, frames, sr, max_pad_length):
-        spectrogram = melspectrogram(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length, n_mels=self.n_mels)
-        x_length = spectrogram.shape[1]
-        spectrogram_padded = pad_sequences(spectrogram, maxlen=max_pad_length, dtype='float',
-                                          padding='post', truncating='post')
-        spectrogram_padded = spectrogram_padded.T
-
-        return spectrogram_padded, x_length
 
     def get_seq_size(self, frames, sr):
         """
@@ -235,7 +184,85 @@ class DataGenerator(Sequence):
             raise ValueError('Not a valid feature type: ', self.type)
 
 
+def load_audio(df, indexes_in_batch):
+    """
+
+    :param df:
+    :param indexes_in_batch:
+    :return:
+    """
+    sr = 0
+    x_data_raw = []
+    y_data_raw = []
+
+    # loads wav-files and transcripts
+    for i in indexes_in_batch:
+
+        # Read sound data
+        path = df.iloc[i]['filename']
+        frames, sr = read(path)
+        x_data_raw.append(frames)
+
+        # Read transcript data
+        y_txt = df.iloc[i]['transcript']
+        y_data_raw.append(y_txt)
+
+    return x_data_raw, y_data_raw, sr
+
+
+def extract_mfcc_and_pad(frames, sr, max_pad_length, frame_length, hop_length, mfcc_features, n_mels):
+    """
+    Generates MFCC (mel frequency cepstral coefficients) and zero-pads with max_pad_length
+
+    Args:
+        frames (np.ndarray[shape=(n,)]):    audio time series
+        sr (int):                           sampling rate of frames
+        max_pad_length (int):               length (number of frames) of longest sequence in batch
+        frame_length
+        hop_length
+        mfcc_features
+        n_mels
+
+    Returns:
+        np.ndarray[shape=(max_seq_length, mfcc_features)]: padded mfcc features of audio time series
+        int: length of sequence before padding (input for CTC)
+    """
+
+    mfcc_frames = mfcc(frames, sr, n_fft=frame_length, hop_length=hop_length, n_mfcc=mfcc_features, n_mels=n_mels)
+    x_length = mfcc_frames.shape[1]
+    mfcc_padded = pad_sequences(mfcc_frames, maxlen=max_pad_length, dtype='float', padding='post',
+                                truncating='post')
+    mfcc_padded = mfcc_padded.T
+
+    return mfcc_padded, x_length
+
+
+def extract_mel_spectrogram_and_pad(frames, sr, max_pad_length, frame_length, hop_length, n_mels):
+    """
+
+    :param frames:
+    :param sr:
+    :param max_pad_length:
+    :param frame_length:
+    :param hop_length:
+    :param n_mels:
+    :return:
+    """
+    spectrogram = melspectrogram(frames, sr, n_fft=frame_length, hop_length=hop_length, n_mels=n_mels)
+    x_length = spectrogram.shape[1]
+    spectrogram_padded = pad_sequences(spectrogram, maxlen=max_pad_length, dtype='float',
+                                      padding='post', truncating='post')
+    spectrogram_padded = spectrogram_padded.T
+
+    return spectrogram_padded, x_length
+
+
 def convert_and_pad_transcripts(y_data_raw):
+    """
+
+    :param y_data_raw:
+    :return:
+    """
     # Finds longest sequence in y for padding
     max_y_length = len(max(y_data_raw, key=len))
 
@@ -256,17 +283,3 @@ def convert_and_pad_transcripts(y_data_raw):
     label_length = np.array(len_y_seq)
 
     return y_data, label_length
-
-"""
-# Plots mfcc
-def plot_mfcc(mfcc_frames):
-    print "\n Plotting mfcc with shape: ", mfcc_frames.shape
-    plt.figure(figsize=(10, 4))
-    librosa.display.specshow(mfcc_frames, x_axis='time')
-    print "librosa display... "
-    plt.colorbar()
-    plt.title('MFCC')
-    plt.tight_layout()
-    plt.interactive(False)
-    plt.show()
-"""
