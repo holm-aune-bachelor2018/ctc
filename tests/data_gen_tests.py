@@ -12,12 +12,9 @@ If not, see http://www.gnu.org/licenses/.
 
 """
 
-import os
 import unittest
 
 import numpy as np
-
-os.chdir("..")
 
 from DataGenerator import DataGenerator
 from data import combine_all_wavs_and_trans_from_csvs
