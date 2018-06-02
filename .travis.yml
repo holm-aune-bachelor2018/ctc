@@ -11,4 +11,4 @@ install:
 # command to run tests
 script:
   - python tests/model_tests.py
-
+  - python tests/data_gen_tests.py
