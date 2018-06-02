@@ -5,8 +5,9 @@ import os
 
 import pandas as pd
 
-from char_map import char_map
-from text import text_to_int_sequence
+from utils.char_map import char_map
+from utils.text_utils import text_to_int_sequence
+
 
 #######################################################
 

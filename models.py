@@ -16,7 +16,7 @@ If not, see http://www.gnu.org/licenses/.
 
 from keras import backend as K
 from keras.layers import Dense, SimpleRNN, LSTM, CuDNNLSTM, Bidirectional, TimeDistributed, Conv1D, ZeroPadding1D
-from keras.layers import Lambda, Input, Dropout, Masking, BatchNormalization
+from keras.layers import Lambda, Input, Dropout, Masking
 from keras.models import Model
 
 

@@ -18,7 +18,7 @@ import pandas
 from keras import Model
 from keras.callbacks import Callback
 
-from utils import calc_wer, predict_on_batch
+from utils.train_utils import calc_wer, predict_on_batch
 
 
 class LossCallback(Callback):

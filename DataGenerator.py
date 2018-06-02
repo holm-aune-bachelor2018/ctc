@@ -177,7 +177,7 @@ class DataGenerator(Sequence):
 
         elif self.type == 'spectrogram':
             spectrogram = melspectrogram(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
-                                        n_mels=self.n_mels)
+                                         n_mels=self.n_mels)
             return spectrogram.shape[1]
 
         else:

@@ -17,7 +17,7 @@ import unittest
 import keras.backend as K
 from keras.optimizers import Adam
 
-from models import *
+import models
 from DataGenerator import DataGenerator
 from data import combine_all_wavs_and_trans_from_csvs
 
