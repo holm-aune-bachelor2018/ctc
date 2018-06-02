@@ -1,16 +1,12 @@
-"""
-This file is taken from
-Baidu ba-dls-deepspeech - https://github.com/baidu-research/ba-dls-deepspeech
 
-Which is under the Apache License:
-    Copyright 2015-2016 Baidu USA LLC.  All rights reserved.
+# The following code is from Baidu ba-dls-deepspeech: https://github.com/baidu-research/ba-dls-deepspeech/
+# Which is under the Apache License:
+#    Copyright 2015-2016 Baidu USA LLC. All rights reserved.
 
-    Apache License
-    Version 2.0, January 2004
-    http://www.apache.org/licenses/
-"""
+#    Apache License
+#    Version 2.0, January 2004
+#    http://www.apache.org/licenses/
 
-# Character map list
 
 char_map_str = """
 <SPACE> 0

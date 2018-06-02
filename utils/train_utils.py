@@ -16,7 +16,7 @@ from itertools import groupby
 
 import numpy as np
 
-from text import wers, int_to_text_sequence
+from text_utils import wers, int_to_text_sequence
 
 
 def predict_on_batch(data_gen, test_func, batch_index):
