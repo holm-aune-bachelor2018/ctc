@@ -7,5 +7,5 @@ install:
   - pip install -r requirements.txt
 # command to run tests
 script:
-  - python ./tests/model_tests.py
+  - python tests/model_tests.py
 
