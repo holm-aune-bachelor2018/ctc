@@ -17,10 +17,10 @@ import argparse
 import keras.backend as K
 from keras import models
 
-import nn_models
+import models
 from DataGenerator import DataGenerator
 from data import combine_all_wavs_and_trans_from_csvs
-from utils import predict_on_batch, calc_wer
+from utils.train_utils import predict_on_batch, calc_wer
 
 
 def main(args):
@@ -139,12 +139,12 @@ if __name__ == '__main__':
                         help='Number of files to predict.')
     parser.add_argument('--batch_index', type=int, default=10,
                         help='Index of batch in sorted .csv file to predict.')
-    parser.add_argument('--calc_wer', type=bool, default=True,
-                        help='Whether to calculate the word error rate on the data in audio_dir.')
+    parser.add_argument('--calc_wer', action='store_true',
+                        help='Calculate the word error rate on the data in audio_dir.')
 
     # Only need to specify these if feature params are changed from default (different than 26 MFCC and 40 mels)
     parser.add_argument('--feature_type', type=str,
-                        help='What features to extract: mfcc, spectrogram. '
+                        help='Feature extraction method: mfcc or spectrogram. '
                              'If none is specified it tries to detect feature type from input_shape.')
     parser.add_argument('--mfccs', type=int, default=26,
                         help='Number of mfcc features per frame to extract.')
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     # Model load params:
     parser.add_argument('--model_load', type=str,
                         help='Path of existing model to load.')
-    parser.add_argument('--load_multi', type=bool, default=False,
+    parser.add_argument('--load_multi', action='store_true',
                         help='Load multi gpu model saved during parallel GPU training.')
 
     args = parser.parse_args()

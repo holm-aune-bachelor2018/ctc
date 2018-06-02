@@ -22,7 +22,7 @@ from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from keras.optimizers import Adam
 from keras.utils import multi_gpu_model
 
-import nn_models
+import models
 from DataGenerator import DataGenerator
 from LossCallback import LossCallback
 from data import combine_all_wavs_and_trans_from_csvs
@@ -123,7 +123,7 @@ def main(args):
             with tf.device('/cpu:0'):
                 # When loading custom objects, Keras needs to know where to find them.
                 # The CTC lambda is a dummy function
-                custom_objects = {'clipped_relu': nn_models.clipped_relu,
+                custom_objects = {'clipped_relu': models.clipped_relu,
                                   '<lambda>': lambda y_true, y_pred: y_pred}
 
                 # When loading a parallel model saved *while* running on multiple GPUs, use load_multi
@@ -140,7 +140,7 @@ def main(args):
         else:
             with tf.device('/cpu:0'):
                 # Create new model
-                model = nn_models.model(model_type=model_type, units=units, input_dim=input_dim,
+                model = models.model(model_type=model_type, units=units, input_dim=input_dim,
                                         output_dim=output_dim, dropout=dropout, cudnn=cudnnlstm, n_layers=n_layers)
                 print "Creating new model: ", model_type
 
@@ -267,7 +267,7 @@ if __name__ == '__main__':
 
     # Preprocessing params
     parser.add_argument('--feature_type', type=str, default='mfcc',
-                        help='What features to extract: mfcc, spectrogram.')
+                        help='Feature extraction method: mfcc or spectrogram.')
     parser.add_argument('--mfccs', type=int, default=26,
                         help='Number of mfcc features per frame to extract.')
     parser.add_argument('--mels', type=int, default=40,
@@ -275,7 +275,7 @@ if __name__ == '__main__':
 
     # Model params
     parser.add_argument('--model_type', type=str, default='brnn',
-                        help='What model to train: brnn, blstm, deep_rnn, deep_lstm, cnn_blstm.')
+                        help='Model to train: brnn, blstm, deep_rnn, deep_lstm, cnn_blstm.')
     parser.add_argument('--units', type=int, default=256,
                         help='Number of hidden nodes.')
     parser.add_argument('--dropout', type=float, default=0.2,
@@ -289,17 +289,17 @@ if __name__ == '__main__':
                         help='No. of epochs before save during training.')
     parser.add_argument('--model_load', type=str, default='',
                         help='Path of existing model to load. If empty creates new model.')
-    parser.add_argument('--load_multi', type=bool, default=False,
+    parser.add_argument('--load_multi', action='store_true',
                         help='Load multi gpu model saved during parallel GPU training.')
 
     # Additional training settings
-    parser.add_argument('--save_best_val', type=bool, default=False,
+    parser.add_argument('--save_best_val', action='store_true',
                         help='Save additional version of model if val_loss improves.')
-    parser.add_argument('--shuffle_indexes', type=bool, default=True,
-                        help='If True, shuffle batches after each epoch.')
-    parser.add_argument('--reduce_lr', type=bool, default=False,
+    parser.add_argument('--shuffle_indexes', action='store_true',
+                        help='Shuffle batches after each epoch.')
+    parser.add_argument('--reduce_lr', action='store_true',
                         help='Reduce the learning rate if model stops improving val_loss.')
-    parser.add_argument('--early_stopping', type=bool, default=False,
+    parser.add_argument('--early_stopping', action='store_true',
                         help='Stop the training early if val_loss stops improving.')
 
     args = parser.parse_args()
