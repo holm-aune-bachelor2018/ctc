@@ -7,4 +7,4 @@ install:
   - pip install -r requirements.txt
 # command to run tests
 script:
-  - test.py # or py.test for Python versions 3.5 and below
+  - python test.py # or py.test for Python versions 3.5 and below
