@@ -1,5 +1,8 @@
-Speech recognition with RNN and CTC
+Speech recognition with RNN and CTC 
 ======
+[![Build Status](https://travis-ci.org/holm-aune-bachelor2018/ctc.svg?branch=master)](https://travis-ci.org/holm-aune-bachelor2018/ctc)
+
+
 Table of Contents
 ------
  * [Project structure](#project)
