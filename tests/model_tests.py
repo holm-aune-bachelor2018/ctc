@@ -51,7 +51,7 @@ class TestModelCompile(unittest.TestCase):
     def test_blstm_compile(self):
         try:
             model = models.blstm(units=256, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, cudnn=False,
-                                    n_layers=1)
+                                 n_layers=1)
             model.compile(loss=self.loss, optimizer=self.optimizer)
         except ():
             model = None
@@ -61,7 +61,7 @@ class TestModelCompile(unittest.TestCase):
     def test_deep_lstm_compile(self):
         try:
             model = models.deep_lstm(units=256, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3,
-                                        cudnn=False, n_layers=3)
+                                     cudnn=False, n_layers=3)
             model.compile(loss=self.loss, optimizer=self.optimizer)
         except ():
             model = None
@@ -71,7 +71,7 @@ class TestModelCompile(unittest.TestCase):
     def test_cnn_blstm_compile(self):
         try:
             model = models.cnn_blstm(units=256, input_dim=26, output_dim=29, dropout=0.2, seq_padding=2048,
-                                        cudnn=False, n_layers=1)
+                                     cudnn=False, n_layers=1)
             model.compile(loss=self.loss, optimizer=self.optimizer)
         except ():
             model = None

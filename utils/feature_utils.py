@@ -72,8 +72,8 @@ def extract_mel_spectrogram_and_pad(frames, sr, max_pad_length, frame_length, ho
     """
     spectrogram = melspectrogram(frames, sr, n_fft=frame_length, hop_length=hop_length, n_mels=n_mels)
     x_length = spectrogram.shape[1]
-    spectrogram_padded = pad_sequences(spectrogram, maxlen=max_pad_length, dtype='float',
-                                      padding='post', truncating='post')
+    spectrogram_padded = pad_sequences(spectrogram, maxlen=max_pad_length, dtype='float', padding='post',
+                                       truncating='post')
     spectrogram_padded = spectrogram_padded.T
 
     return spectrogram_padded, x_length
