@@ -1,3 +1,17 @@
+"""
+LICENSE
+
+This file is part of Speech recognition with CTC in Keras.
+The project is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+version.
+The project is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with this project.
+If not, see http://www.gnu.org/licenses/.
+
+"""
+
 # CTC implementation from Keras example found at https://github.com/keras-team/keras/blob/master/examples/image_ocr.py
 
 from keras import backend as K
@@ -10,11 +24,11 @@ def model(model_type='brnn', units=512, input_dim=26, output_dim=29, dropout=0.2
     if model_type == 'brnn':
         network_model = brnn(units, input_dim, output_dim, dropout)
 
-    elif model_type == 'blstm':
-        network_model = blstm(units, input_dim, output_dim, dropout, cudnn=cudnn, n_layers=n_layers)
-
     elif model_type == 'deep_rnn':
         network_model = deep_rnn(units, input_dim, output_dim, dropout, n_layers=n_layers)
+
+    elif model_type == 'blstm':
+        network_model = blstm(units, input_dim, output_dim, dropout, cudnn=cudnn, n_layers=n_layers)
 
     elif model_type == 'deep_lstm':
         network_model = deep_lstm(units, input_dim, output_dim, dropout, cudnn=cudnn, n_layers=n_layers)
@@ -171,7 +185,7 @@ def deep_rnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, n
     return network_model
 
 
-def blstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, cudnn=True, n_layers=1):
+def blstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, cudnn=False, n_layers=1):
     """
     :param units: Hidden units per layer
     :param input_dim: Size of input dimension (number of features), default=26
@@ -256,7 +270,7 @@ def blstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, cudn
     return network_model
 
 
-def deep_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, n_layers=3, cudnn=True):
+def deep_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, cudnn=False, n_layers=3):
     """
     :param units: Hidden units per layer
     :param input_dim: Size of input dimension (number of features), default=26
@@ -335,7 +349,7 @@ def deep_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, 
     return network_model
 
 
-def cnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2, seq_padding=2176, cudnn=True, n_layers=1):
+def cnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2, seq_padding=2176, cudnn=False, n_layers=1):
     """
     :param units: Hidden units per layer
     :param input_dim: Size of input dimension (number of features), default=26

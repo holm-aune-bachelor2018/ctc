@@ -1,3 +1,17 @@
+"""
+LICENSE
+
+This file is part of Speech recognition with CTC in Keras.
+The project is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+version.
+The project is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with this project.
+If not, see http://www.gnu.org/licenses/.
+
+"""
+
 # Based on tutorial: https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly.html
 # and modified to fit data
 
@@ -9,7 +23,7 @@ from keras.utils import Sequence
 from librosa.feature import mfcc, melspectrogram
 from soundfile import read
 
-import data
+from text import text_to_int_sequence
 
 
 # import librosa.display
@@ -230,7 +244,7 @@ def convert_and_pad_transcripts(y_data_raw):
 
     # Converts to int and pads to be equal max_y_length
     for i in range(0, len(y_data_raw)):
-        y_int = data.text_to_int_sequence(y_data_raw[i])
+        y_int = text_to_int_sequence(y_data_raw[i])
         len_y_seq.append(len(y_int))
 
         for j in range(len(y_int), max_y_length):

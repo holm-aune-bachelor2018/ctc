@@ -1,3 +1,17 @@
+"""
+LICENSE
+
+This file is part of Speech recognition with CTC in Keras.
+The project is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+version.
+The project is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with this project.
+If not, see http://www.gnu.org/licenses/.
+
+"""
+
 from itertools import groupby
 
 import numpy as np
@@ -5,7 +19,7 @@ import numpy as np
 from text import wers, int_to_text_sequence
 
 
-def predict_batch(data_gen, test_func, batch_index):
+def predict_on_batch(data_gen, test_func, batch_index):
     input_data, _ = data_gen.__getitem__(batch_index)
 
     x_data = input_data.get("the_input")

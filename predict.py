@@ -1,3 +1,17 @@
+"""
+LICENSE
+
+This file is part of Speech recognition with CTC in Keras.
+The project is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+version.
+The project is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with this project.
+If not, see http://www.gnu.org/licenses/.
+
+"""
+
 import argparse
 
 import keras.backend as K
@@ -6,7 +20,7 @@ from keras import models
 import nn_models
 from DataGenerator import DataGenerator
 from data import combine_all_wavs_and_trans_from_csvs
-from utils import predict_batch, calc_wer
+from utils import predict_on_batch, calc_wer
 
 
 def main(args):
@@ -14,6 +28,7 @@ def main(args):
         if not args.model_load:
             raise ValueError()
         audio_dir = args.audio_dir
+        audio_dir = "data_dir/librivox-test-clean.csv"
 
         print "\nReading test data: "
         _, df = combine_all_wavs_and_trans_from_csvs(audio_dir)
@@ -28,6 +43,8 @@ def main(args):
         # Training data_params:
         model_load = args.model_load
         load_multi = args.load_multi
+
+        model_load = "/home/marit/python/train-logs/results/MELSPEC-BLSTM/1405_blstm_64x1024_spect.h5"
 
         # Sets the full dataset in audio_dir to be available through data_generator
         # The data_generator doesn't actually load the audio files until they are requested through __get_item__()
@@ -96,7 +113,7 @@ def main(args):
             wer = calc_wer(test_func, data_generator)
             print "Average WER: ", wer[1]
 
-        predictions = predict_batch(data_generator, test_func, batch_index)
+        predictions = predict_on_batch(data_generator, test_func, batch_index)
         print "\n - Predictions from batch index: ", batch_index, "\nFrom: ", audio_dir, "\n"
         for i in predictions:
             print "Original: ", i[0]
@@ -122,7 +139,7 @@ if __name__ == '__main__':
                         help='Number of files to predict.')
     parser.add_argument('--batch_index', type=int, default=10,
                         help='Index of batch in sorted .csv file to predict.')
-    parser.add_argument('--calc_wer', type=bool, default=False,
+    parser.add_argument('--calc_wer', type=bool, default=True,
                         help='Whether to calculate the word error rate on the data in audio_dir.')
 
     # Only need to specify these if feature params are changed from default (different than 26 MFCC and 40 mels)
@@ -137,7 +154,7 @@ if __name__ == '__main__':
     # Model load params:
     parser.add_argument('--model_load', type=str,
                         help='Path of existing model to load.')
-    parser.add_argument('--load_multi', type=bool, default=True,
+    parser.add_argument('--load_multi', type=bool, default=False,
                         help='Load multi gpu model saved during parallel GPU training.')
 
     args = parser.parse_args()

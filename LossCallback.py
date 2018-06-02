@@ -1,10 +1,24 @@
+"""
+LICENSE
+
+This file is part of Speech recognition with CTC in Keras.
+The project is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+version.
+The project is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with this project.
+If not, see http://www.gnu.org/licenses/.
+
+"""
+
 from datetime import datetime
 
 import pandas
 from keras import Model
 from keras.callbacks import Callback
 
-from utils import calc_wer, predict_batch
+from utils import calc_wer, predict_on_batch
 
 
 class LossCallback(Callback):
@@ -42,7 +56,7 @@ class LossCallback(Callback):
 
         # Print a sample of predictions, for visualisation
         print "\nPrediction samples:\n"
-        predictions = predict_batch(self.validation_gen, self.test_func, 6)
+        predictions = predict_on_batch(self.validation_gen, self.test_func, 6)
 
         for i in predictions:
             print "Original: ", i[0]
