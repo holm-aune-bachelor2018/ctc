@@ -119,6 +119,7 @@ With the GPU TensorFlow back you may wish to try the CuDNN optimised LSTM
 ```predict.py``` is used to load already trained models, and produces predicions.
 
 Parameters for ```train.py```:
+
 **Training params** <br>
 ```
 --batch_size: Number of files in one batch. Default=32
