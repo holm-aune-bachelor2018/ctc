@@ -16,6 +16,7 @@ Table of Contents
 ## Project
 Work in progress
 
+![alt text](https://github.com/holm-aune-bachelor2018/ctc/blob/master/images/architecture_overview.png)
 <br>
 
 <a name="installation"/>
@@ -112,7 +113,7 @@ With the GPU TensorFlow back you may wish to try the CuDNN optimised LSTM
 
 <a name="params"/>
 
-## Parameters
+## Usage
 Parameters for train.py
 
 **Training params** <br>
@@ -149,15 +150,15 @@ Parameters for train.py
 --model_save: Path, where to save model.
 --checkpoint: No. of epochs before save during training. Default=10
 --model_load: Path of existing model to load. If empty creates new model.
---load_multi: Load multi gpu model saved during parallel GPU training. Default=False
+--load_multi: Include to load multi gpu model (saved during parallel GPU training).
 ```
 
 **Additional training settings**<br>
 ```
---save_best_val: Save additional version of model if val_loss improves. Defalt=False
---shuffle_indexes: If True, shuffle batches after each epoch. Default=False
---reduce_lr: Reduce the learning rate if model stops improving val_loss. Default=False
---early_stopping: Stop the training early if val_loss stops improving. Default=False
+--save_best_val: Include to save additional version of model if val_loss improves.
+--shuffle_indexes: Include to shuffle batches after each epoch. 
+--reduce_lr: Include to reduce the learning rate if model stops improving val_loss.
+--early_stopping: Include to stop the training early if val_loss stops improving.
 ```
 
 <a name="licence"/>
