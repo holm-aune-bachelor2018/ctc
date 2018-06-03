@@ -21,6 +21,7 @@ This repository is a part of TDAT3001 Bachelor Thesis in Computer Engineering at
 
 The purpose of this project was to test different neural networks' performance on speech recognition, using recurrent neural networks (RNN) and connectionist temporal classification (CTC).
 
+During this project we have tested various nettwork models for speech recognition. The resulting logs and saved models can be found at [train-logs].
 
 <a name="installation"/>
 
@@ -214,3 +215,4 @@ along with this project. If not, see <http://www.gnu.org/licenses/>.
 [Python download]: https://www.python.org/downloads/
 [TensorFlow installation]: https://www.tensorflow.org/install/
 [Multi-GPU Model Keras guide]: https://blog.datawow.io/multi-gpu-model-keras-ef463bf965d9
+[train-logs]: https://github.com/holm-aune-bachelor2018/train-logs
