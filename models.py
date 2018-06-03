@@ -372,7 +372,7 @@ def cnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2, seq_padding=2176,
     # Input data type
     dtype = 'float32'
 
-    activation_conv = 'relu'
+    activation_conv = clipped_relu
 
     # Kernel and bias initializers for fully connected dense layer
     kernel_init_dense = 'random_normal'

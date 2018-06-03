@@ -28,7 +28,6 @@ def main(args):
         if not args.model_load:
             raise ValueError()
         audio_dir = args.audio_dir
-        audio_dir = "data_dir/librivox-test-clean.csv"
 
         print "\nReading test data: "
         _, df = combine_all_wavs_and_trans_from_csvs(audio_dir)
@@ -130,7 +129,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    # audio_dir, batch_size, batch_index, calc_wer, feature_type, mfccs, mels, model_load, load_multi
+
     # Predict data params:
     parser.add_argument('--audio_dir', type=str, default="data_dir/librivox-test-clean.csv",
                         help='Path to .csv file of audio to predict')

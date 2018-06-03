@@ -21,6 +21,14 @@ from wer_utils import wers
 
 
 def predict_on_batch(data_gen, test_func, batch_index):
+    """
+    Produce a sample of predictions at given batch index from data in data_gen
+
+    :param data_gen: DataGenerator to produce input data
+    :param test_func: Keras function that takes preprocessed audio input and outputs network predictions
+    :param batch_index: which batch to use as input data
+    :return: List containing original transcripts and predictions
+    """
     input_data, _ = data_gen.__getitem__(batch_index)
 
     x_data = input_data.get("the_input")
@@ -38,6 +46,13 @@ def predict_on_batch(data_gen, test_func, batch_index):
 
 
 def calc_wer(test_func, data_gen):
+    """
+    Calculate WER on all data from data_gen
+
+    :param test_func: Keras function that takes preprocessed audio input and outputs network predictions
+    :param data_gen: DataGenerator to produce input data
+    :return: array containing [list of WERs from each batch, average WER for all batches]
+    """
     out_true = []
     out_pred = []
     for batch in xrange(0, data_gen.__len__(), data_gen.batch_size):
@@ -58,6 +73,13 @@ def calc_wer(test_func, data_gen):
 
 
 def max_decode(test_func, x_data):
+    """
+    Calculate network probabilities with test_func and decode with max decode/greedy decode
+
+    :param test_func: Keras function that takes preprocessed audio input and outputs network predictions
+    :param x_data: preprocessed audio data
+    :return: decoded: max decoded network output
+    """
     y_pred = test_func([x_data])[0]
 
     decoded = []

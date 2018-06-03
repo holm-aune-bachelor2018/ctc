@@ -20,8 +20,10 @@ from random import shuffle as shuf
 import numpy as np
 from keras.utils import Sequence
 from librosa.feature import mfcc, melspectrogram
+
 from utils.feature_utils import load_audio, convert_and_pad_transcripts, extract_mfcc_and_pad, \
     extract_mel_spectrogram_and_pad
+
 
 class DataGenerator(Sequence):
     """
@@ -68,19 +70,15 @@ class DataGenerator(Sequence):
         """
         Generates a batch of correctly shaped X and Y data
 
-        Args:
-            batch_index (int): index of the batch to generate
-
-        Returns:
-            dictionary: {
+        :param batch_index: index of the batch to generate
+        :return: input dictionary containing:
                 'the_input':     np.ndarray[shape=(batch_size, max_seq_length, mfcc_features)]: input audio data
                 'the_labels':    np.ndarray[shape=(batch_size, max_transcript_length)]: transcription data
                 'input_length':  np.ndarray[shape=(batch_size, 1)]: length of each sequence (numb of frames) in x_data
                 'label_length':  np.ndarray[shape=(batch_size, 1)]: length of each sequence (numb of letters) in y_data
-            }
-            dictionary: {
+                 output dictionary containing:
                 'ctc':           np.ndarray[shape=(batch_size, 1)]: dummy data for dummy loss function
-            }
+
         """
 
         # Generate indexes of current batch
@@ -115,11 +113,16 @@ class DataGenerator(Sequence):
 
     def extract_features_and_pad(self, x_data_raw, sr):
         """
+        Converts list of audio time series to MFCC or melspectrogram
+        Zero-pads each sequence to be equal length to the longest sequence.
+        Stores the length of each feature-sequence before padding for the CTC
 
-        :param x_data_raw:
-        :param sr:
-        :return:
+        :param x_data_raw: list with audio time series
+        :param sr: sampling rate of frames
+        :return: x_data: numpy array with padded feature-sequence (MFCC or melspectrogram)
+                 input_length: numpy array containing unpadded length of each feature-sequence
         """
+
         # Finds longest frame in batch for padding
         max_x_length = self.get_seq_size(max(x_data_raw, key=len), sr)
 
@@ -142,7 +145,7 @@ class DataGenerator(Sequence):
             x_data = np.empty([0, max_x_length, self.n_mels])
             len_x_seq = []
 
-            # Extract mfcc features and pad so every frame-sequence is equal max_x_length
+            # Extract mel spectrogram features and pad so every frame-sequence is equal max_x_length
             for i in range(0, len(x_data_raw)):
                 x, x_len = extract_mel_spectrogram_and_pad(x_data_raw[i], sr, max_x_length, self.frame_length,
                                                            self.hop_length, self.n_mels)
@@ -158,15 +161,13 @@ class DataGenerator(Sequence):
 
     def get_seq_size(self, frames, sr):
         """
-        Get audio sequence size of audio converted to mfcc-features
+        Get audio sequence size of audio time series when converted to mfcc-features or mel spectrogram
 
-        Args:
-            frames (np.ndarray [shape=(n,)]): audio time series
-            sr (int): sampling rate of frames
-
-        Returns:
-            int: sequence size of mfcc-converted audio
+        :param frames: audio time series
+        :param sr: sampling rate of frames
+        :return: sequence size of mfcc-converted audio
         """
+
         if self.type == 'mfcc':
             mfcc_frames = mfcc(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
                                n_mfcc=self.mfcc_features, n_mels=self.n_mels)

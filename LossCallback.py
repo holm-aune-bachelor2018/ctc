@@ -22,6 +22,19 @@ from utils.train_utils import calc_wer, predict_on_batch
 
 
 class LossCallback(Callback):
+    """
+    Callback to calculate WER and save model and logs during training
+
+    Args:
+        test_func: Keras function that takes preprocessed audio input and outputs network predictions
+        validation_gen: DataGenerator for validation data
+        test_gen: DataGenerator for test data
+        model: Keras Model obj
+        checkpoint: how often (epochs) to save model
+        path_to_save: path to save the model
+        log_file_path: path to save logs during training
+
+    """
     def __init__(self, test_func, validation_gen, test_gen, model, checkpoint, path_to_save, log_file_path):
         self.test_func = test_func
         self.validation_gen = validation_gen
@@ -34,6 +47,11 @@ class LossCallback(Callback):
         self.timestamp = datetime.now().strftime('%m-%d_%H%M') + ".csv"
 
     def on_epoch_end(self, epoch, logs={}):
+        """
+        Method used at the end of each epoch
+        to calculate WER from validation data
+        and save model and logs at checkpoints
+        """
         wer = calc_wer(self.test_func, self.validation_gen)
         print " - average WER: ", wer[1], "\n"
 
@@ -46,10 +64,14 @@ class LossCallback(Callback):
             self.save_log()
 
     def on_train_end(self, logs={}):
+        """
+        Method used by fit_generator() at the end of training
+        to calculate the test WER and output prediction samples
+        """
         try:
             test_wer = calc_wer(self.test_func, self.test_gen)
             print "\n - Training ended, test wer: ", test_wer[1], " -"
-        except (Exception, ArithmeticError) as e:
+        except (Exception, StandardError) as e:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
             print message
@@ -65,6 +87,9 @@ class LossCallback(Callback):
         self.save_log()
 
     def save_log(self):
+        """
+        Method to save logs (loss, val_loss, wer) during training
+        """
         stats = pandas.DataFrame(data=self.values, columns=['loss', 'val_loss', 'wer'])
         stats.to_csv(self.log_file_path + "_" + self.timestamp)
         print "Log file saved: ", self.log_file_path + "_" + self.timestamp
