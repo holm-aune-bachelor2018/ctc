@@ -5,37 +5,39 @@ Speech recognition with RNN and CTC
 
 Table of Contents
 ------
- * [Project structure](#project)
+ * [Project description](#project)
  * [Installation](#installation)
  * [Running](#running)
- * [Parameters](#params)
+ * [Usage](#usage)
+ * [Architecure overview](#overview)
  * [Licence](#licence)
 
 <a name="project"/>
 
-## Project
-Work in progress
+## Project description
+This project is a part of TDAT3001 Bachelor Thesis in Computer Engineering at NTNU, project number 61:
 
-![alt text](https://github.com/holm-aune-bachelor2018/ctc/blob/master/images/architecture_overview.png)
-<br>
+"End-to-end speech recognition with recurrent neural networks and connectionist temporal classification" by Anita Kristine Aune and Marit Sundet-Holm, 2018.
+
+The purpose of this project was to test different neural networks' performance on speech recognition, using recurrent neural networks (RNN) and connectionist temporal classification (CTC).
+
 
 <a name="installation"/>
 
 ## Installation
-This project uses TensorFlow (version) and Keras (version).
+This project uses Python 2.7, TensorFlow version 1.6.1 and Keras version 2.1.5.
 
 This installation guide is for macOS and Ubuntu. 
-TensorFlow also supports Windows but we have not tested this project on Windows.
-1. Install Python  
-This project uses Python 2.7  
-Download and install from [Python download]
+TensorFlow also supports Windows, but this project is not tested on Windows.
+1. Install Python   
+Download and install Python 2.7 from [Python download]
 
 2. Install TensorFlow  
 Install TensorFlow for Python 2.7 in a virtual environment following the [TensorFlow installation]  
 If possible, GPU installation is recommended as it speeds up training significantly.
 
 3. Install requirements  
-Fork the project and download, or simply clone it, and enter the downloaded directory:
+Fork and download or clone the project, and enter the downloaded directory:
    ```
    $ git clone https://github.com/holm-aune-bachelor2018/ctc.git
    $ cd ctc
@@ -46,9 +48,8 @@ Fork the project and download, or simply clone it, and enter the downloaded dire
    (tensorflow) $ pip install -r requirements.txt
    ```
 
-
 **NOTE - multi GPU training**  
-As per Keras (version), there is a bug when trying to save the model during training when using the multi_gpu_model().  
+As per Keras version 2.1.5, there is a bug when trying to save the model during training when using the multi_gpu_model().  
 Please refer to this [Multi-GPU Model Keras guide] regarding how to save and load a multi-GPU model, including a work-around for the bug.
 
 <br>
@@ -88,7 +89,7 @@ Save the model every 10 epochs at "models/brnn_25hours.h5" <br>
 <br> 
 
 **Example loading** <br>
-To continue training the same model for another 50 hours, use the model_load argument.
+To continue training the same model for another 50 epochs, use the model_load argument:
 ```
 (tensorflow) $ train.py --model_load='models/brnn_25hours.h5' --units=512 --batch_size=64 --epoch_len=256 --epochs=50 --model_save='models/continued_brnn_25hours.h5' --log_file='logs/continued_brnn_25hours'  
 ```
@@ -111,7 +112,7 @@ With the GPU TensorFlow back you may wish to try the CuDNN optimised LSTM
 
 <br>
 
-<a name="params"/>
+<a name="usage"/>
 
 ## Usage
 Parameters for train.py
@@ -143,6 +144,8 @@ Parameters for train.py
 --model_type: What model to train: brnn, blstm, deep_rnn, deep_lstm, cnn_blstm. Default='brnn'
 --units: Number of hidden nodes. Default=256
 --dropout: Set dropout value (0-1). Default=0.2
+--layers: Number of recurrent or deep layers. Default=1
+--cudnn: Include to use cudnn optimized LSTM.
 ```
 
 **Saving and loading model params**<br>
@@ -160,6 +163,13 @@ Parameters for train.py
 --reduce_lr: Include to reduce the learning rate if model stops improving val_loss.
 --early_stopping: Include to stop the training early if val_loss stops improving.
 ```
+
+<a name="overview"/>
+<br>
+
+## Architecture overview
+![alt text](https://github.com/holm-aune-bachelor2018/ctc/blob/master/images/architecture_overview.png)
+
 
 <a name="licence"/>
 <br>
