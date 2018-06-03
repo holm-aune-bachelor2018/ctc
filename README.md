@@ -107,7 +107,7 @@ ONLY WORKS WITH GPU <br>
 With the GPU TensorFlow back you may wish to try the CuDNN optimised LSTM
 
 ```
-(tensorflow) $ train.py --model_type=blstm --cudnn=True --units=512 --batch_size=64 --epoch_len=256 --epochs=50 --model_save='models/blstm_25hours.h5' --log_file='logs/blstm_25hours'
+(tensorflow) $ train.py --model_type=blstm --cudnn --units=512 --batch_size=64 --epoch_len=256 --epochs=50 --model_save='models/blstm_25hours.h5' --log_file='logs/blstm_25hours'
 ```
 
 <br>
