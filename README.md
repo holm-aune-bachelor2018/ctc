@@ -15,7 +15,7 @@ Table of Contents
 <a name="project"/>
 
 ## Project description
-This project is a part of TDAT3001 Bachelor Thesis in Computer Engineering at NTNU, project number 61:
+This repository is a part of TDAT3001 Bachelor Thesis in Computer Engineering at NTNU, project number 61:
 
 "End-to-end speech recognition with recurrent neural networks and connectionist temporal classification" by Anita Kristine Aune and Marit Sundet-Holm, 2018.
 
