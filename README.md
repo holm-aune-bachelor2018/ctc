@@ -173,6 +173,22 @@ Parameters for ```train.py```:
 ## Architecture overview
 ![alt text](https://github.com/holm-aune-bachelor2018/ctc/blob/master/images/architecture_overview.png)
 
+Shows the overall structure of the project.  
+  * <b>train.py</b> sets up network training.
+
+  * <b>models.py</b> sets up the model build.
+   
+  * <b>data.py</b> generates a DataFrame containing filename (path to audio files), filesize and transcripts.
+   
+  * <b>DataGenerator.py</b> supplies the fit_generator() in train.py with batches of data during training.  
+   
+  * <b>LossCallback.py</b> is used by the fit_generator() in train to calculate WER and save model and logs during training.  
+   
+  * The remaning is varying utilities.  
+   
+   
+   
+Additionally, predict.py loads a trained model and creates prediction samples. It can also calculate WER.
 
 <a name="licence"/>
 <br>
