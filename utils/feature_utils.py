@@ -1,3 +1,17 @@
+"""
+LICENSE
+
+This file is part of Speech recognition with CTC in Keras.
+The project is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+version.
+The project is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with this project.
+If not, see http://www.gnu.org/licenses/.
+
+"""
+
 import numpy as np
 from keras.preprocessing.sequence import pad_sequences
 from librosa.feature import mfcc, melspectrogram
@@ -8,10 +22,10 @@ from utils.text_utils import text_to_int_sequence
 
 def load_audio(df, indexes_in_batch):
     """
-
-    :param df:
-    :param indexes_in_batch:
-    :return:
+    reads a dataframe containing filename,filesize,transcript and the corresponding frames (audio time series)
+    :param df: dataframe containing filename,filesize,transcript
+    :param indexes_in_batch: list containing indexes of the audio files in the dataframe
+    :return: x_data_raw, y_data_raw, sr
     """
     sr = 0
     x_data_raw = []
@@ -35,19 +49,14 @@ def load_audio(df, indexes_in_batch):
 def extract_mfcc_and_pad(frames, sr, max_pad_length, frame_length, hop_length, mfcc_features, n_mels):
     """
     Generates MFCC (mel frequency cepstral coefficients) and zero-pads with max_pad_length
-
-    Args:
-        frames (np.ndarray[shape=(n,)]):    audio time series
-        sr (int):                           sampling rate of frames
-        max_pad_length (int):               length (number of frames) of longest sequence in batch
-        frame_length
-        hop_length
-        mfcc_features
-        n_mels
-
-    Returns:
-        np.ndarray[shape=(max_seq_length, mfcc_features)]: padded mfcc features of audio time series
-        int: length of sequence before padding (input for CTC)
+    :param frames: audio time series
+    :param sr: sampling rate of audio time series
+    :param max_pad_length: length (no. of frames) of longest sequence in batch
+    :param frame_length: length of the frames
+    :param hop_length: length of hops (for overlap)
+    :param mfcc_features: number of mfcc features to extract
+    :param n_mels: number of mels
+    :return: mfcc_padded, x_length
     """
 
     mfcc_frames = mfcc(frames, sr, n_fft=frame_length, hop_length=hop_length, n_mfcc=mfcc_features, n_mels=n_mels)
@@ -61,14 +70,14 @@ def extract_mfcc_and_pad(frames, sr, max_pad_length, frame_length, hop_length, m
 
 def extract_mel_spectrogram_and_pad(frames, sr, max_pad_length, frame_length, hop_length, n_mels):
     """
-
-    :param frames:
-    :param sr:
-    :param max_pad_length:
-    :param frame_length:
-    :param hop_length:
-    :param n_mels:
-    :return:
+    Generates mel spectrograms and zero-pads with max_pad_length
+    :param frames: audio time series
+    :param sr: sampling rate of audio time series
+    :param max_pad_length: length (no. of frames) of longest sequence in batch
+    :param frame_length: length of the frames
+    :param hop_length: length of the hops (for overlap)
+    :param n_mels: number of mels
+    :return: spectrogram_padded, x_length
     """
     spectrogram = melspectrogram(frames, sr, n_fft=frame_length, hop_length=hop_length, n_mels=n_mels)
     x_length = spectrogram.shape[1]
@@ -81,9 +90,9 @@ def extract_mel_spectrogram_and_pad(frames, sr, max_pad_length, frame_length, ho
 
 def convert_and_pad_transcripts(y_data_raw):
     """
-
-    :param y_data_raw:
-    :return:
+    Converts and pads transcripts from text to int sequences
+    :param y_data_raw: transcripts
+    :return: y_data, label_length
     """
     # Finds longest sequence in y for padding
     max_y_length = len(max(y_data_raw, key=len))

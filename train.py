@@ -281,6 +281,7 @@ if __name__ == '__main__':
     parser.add_argument('--dropout', type=float, default=0.2,
                         help='Set dropout value (0-1).')
     parser.add_argument('--layers', type=int, default=1, help='Number of recurrent or deep layers.')
+    parser.add_argument('--cudnn', action='store_true', help='Whether to use cudnn optimized LSTM')
 
     # Saving and loading model params:
     parser.add_argument('--model_save', type=str,

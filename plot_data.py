@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 def main(args):
     try:
-        plot_graph_from_csv("results/2305_cnn_blstm_64x1024_mfcc_05-23_1030.csv", args.save, args.title)
+        plot_graph_from_csv(args.path, args.save, args.title)
 
     except Exception as e:
         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -28,6 +28,15 @@ def main(args):
 
 
 def plot_graph_from_csv(path, save, title, x_axis=100, y_axis=250):
+    """
+    Plots data from a csv file to a graph, and saves the graph as a .png
+    :param path: Path to csv file
+    :param save: Path, where to save graph
+    :param title: Title of graph
+    :param x_axis: Max value x-axis, Default=100
+    :param y_axis: Max value y-axis, Default=250
+    :return:
+    """
     input_path = path
     save_path = save + ".png"
     title = title

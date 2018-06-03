@@ -44,8 +44,6 @@ def main(args):
         model_load = args.model_load
         load_multi = args.load_multi
 
-        model_load = "/home/marit/python/train-logs/results/MELSPEC-BLSTM/1405_blstm_64x1024_spect.h5"
-
         # Sets the full dataset in audio_dir to be available through data_generator
         # The data_generator doesn't actually load the audio files until they are requested through __get_item__()
         epoch_length = 0
@@ -53,7 +51,7 @@ def main(args):
         # Load trained model
         # When loading custom objects, Keras needs to know where to find them.
         # The CTC lambda is a dummy function
-        custom_objects = {'clipped_relu': nn_models.clipped_relu,
+        custom_objects = {'clipped_relu': models.clipped_relu,
                           '<lambda>': lambda y_true, y_pred: y_pred}
 
         # When loading a parallel model saved *while* running on GPU, use load_multi
@@ -119,9 +117,10 @@ def main(args):
             print "Original: ", i[0]
             print "Predicted: ", i[1], "\n"
 
-    except (Exception, ArithmeticError) as e:
+    except (Exception, StandardError, GeneratorExit, SystemExit) as e:
         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
         message = template.format(type(e).__name__, e.args)
+        print "e.args: ", e.args
         print message
 
     finally:
