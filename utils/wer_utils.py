@@ -15,12 +15,10 @@ def wer(original, result):
     # Therefore we split the strings into words first:
     original = original.split()
     result = result.split()
-    wer = levenshtein(original, result) / float(len(original))
+    distance = levenshtein(original, result)
+    ref_len = len(original)
 
-    if wer > 1.0:
-        return 1.0
-    else:
-        return wer
+    return distance, ref_len
 
 
 def wers(originals, results):
@@ -30,15 +28,20 @@ def wers(originals, results):
     except:
         print(originals)
         raise("ERROR assert count>0 - looks like data is missing")
-    rates = []
-    mean = 0.0
+        
     assert count == len(results)
+    
+    rates = []
+    num_sum, den_sum = 0.0, 0.0
     for i in range(count):
-        rate = wer(originals[i], results[i])
-        mean = mean + rate
+        num, den = wer(originals[i], results[i])
+        num_sum += num
+        den_sum += den
+        
+        rate = num / den
         rates.append(rate)
 
-    return rates, mean / float(count)
+    return rates, num_sum / den_sum
 
 
 # The following code is from: http://hetland.org/coding/python/levenshtein.py
