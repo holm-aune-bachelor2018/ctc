@@ -1,0 +1,4 @@
+*.pyc
+data_dir/LibriSpeech
+__pycache__
+*.tar.gz

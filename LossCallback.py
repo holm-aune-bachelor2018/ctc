@@ -35,6 +35,7 @@ class LossCallback(Callback):
         log_file_path: path to save logs during training
 
     """
+
     def __init__(self, test_func, validation_gen, test_gen, model, checkpoint, path_to_save, log_file_path):
         self.test_func = test_func
         self.validation_gen = validation_gen
@@ -53,7 +54,7 @@ class LossCallback(Callback):
         and save model and logs at checkpoints
         """
         wer = calc_wer(self.test_func, self.validation_gen)
-        print " - average WER: ", wer[1], "\n"
+        print(" - average WER: ", wer[1], "\n")
 
         self.values.append([logs.get('loss'), logs.get('val_loss'), wer[1]])
 
@@ -70,19 +71,19 @@ class LossCallback(Callback):
         """
         try:
             test_wer = calc_wer(self.test_func, self.test_gen)
-            print "\n - Training ended, test wer: ", test_wer[1], " -"
-        except (Exception, StandardError) as e:
+            print("\n - Training ended, test wer: ", test_wer[1], " -")
+        except (Exception) as e:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
-            print message
+            print(message)
 
-        # Print a sample of predictions, for visualisation
-        print "\nPrediction samples:\n"
+        # Print(a sample of predictions, for visualisation)
+        print("\nPrediction samples:\n")
         predictions = predict_on_batch(self.validation_gen, self.test_func, 6)
 
         for i in predictions:
-            print "Original: ", i[0]
-            print "Predicted: ", i[1], "\n"
+            print("Original: ", i[0])
+            print("Predicted: ", i[1], "\n")
 
         self.save_log()
 
@@ -90,8 +91,7 @@ class LossCallback(Callback):
         """
         Method to save logs (loss, val_loss, wer) during training
         """
-        stats = pandas.DataFrame(data=self.values, columns=['loss', 'val_loss', 'wer'])
+        stats = pandas.DataFrame(data=self.values, columns=[
+                                 'loss', 'val_loss', 'wer'])
         stats.to_csv(self.log_file_path + "_" + self.timestamp)
-        print "Log file saved: ", self.log_file_path + "_" + self.timestamp
-
-
+        print("Log file saved: ", self.log_file_path + "_" + self.timestamp)

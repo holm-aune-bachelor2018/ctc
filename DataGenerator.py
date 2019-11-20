@@ -18,8 +18,8 @@ If not, see http://www.gnu.org/licenses/.
 from random import shuffle as shuf
 
 import numpy as np
+import librosa
 from keras.utils import Sequence
-from librosa.feature import mfcc, melspectrogram
 
 from utils.feature_utils import load_audio, convert_and_pad_transcripts, extract_mfcc_and_pad, \
     extract_mel_spectrogram_and_pad
@@ -63,7 +63,8 @@ class DataGenerator(Sequence):
     def __len__(self):
         """Denotes the number of batches per epoch"""
         if (self.epoch_length == 0) | (self.epoch_length > int(np.floor(self.df.shape[0]/self.batch_size))):
-            self.epoch_length = int(np.floor(self.df.shape[0] / self.batch_size))
+            self.epoch_length = int(
+                np.floor(self.df.shape[0] / self.batch_size))
         return self.epoch_length
 
     def __getitem__(self, batch_index):
@@ -82,7 +83,8 @@ class DataGenerator(Sequence):
         """
 
         # Generate indexes of current batch
-        indexes_in_batch = self.indexes[batch_index * self.batch_size:(batch_index + 1) * self.batch_size]
+        indexes_in_batch = self.indexes[batch_index *
+                                        self.batch_size:(batch_index + 1) * self.batch_size]
 
         # Shuffle indexes within current batch if shuffle=true
         if self.shuffle:
@@ -107,7 +109,8 @@ class DataGenerator(Sequence):
                   'input_length': input_length,
                   'label_length': label_length}
 
-        outputs = {'ctc': np.zeros([self.batch_size])} # dummy data for dummy loss function
+        # dummy data for dummy loss function
+        outputs = {'ctc': np.zeros([self.batch_size])}
 
         return inputs, outputs
 
@@ -135,7 +138,8 @@ class DataGenerator(Sequence):
                 x, x_len = extract_mfcc_and_pad(x_data_raw[i], sr, max_x_length, self.frame_length, self.hop_length,
                                                 self.mfcc_features, self.n_mels)
                 x_data = np.insert(x_data, i, x, axis=0)
-                len_x_seq.append(x_len - 2)  # -2 because ctc discards the first two outputs of the rnn network
+                # -2 because ctc discards the first two outputs of the rnn network
+                len_x_seq.append(x_len - 2)
 
             # Convert input length list to numpy array
             input_length = np.array(len_x_seq)
@@ -150,7 +154,8 @@ class DataGenerator(Sequence):
                 x, x_len = extract_mel_spectrogram_and_pad(x_data_raw[i], sr, max_x_length, self.frame_length,
                                                            self.hop_length, self.n_mels)
                 x_data = np.insert(x_data, i, x, axis=0)
-                len_x_seq.append(x_len - 2)  # -2 because ctc discards the first two outputs of the rnn network
+                # -2 because ctc discards the first two outputs of the rnn network
+                len_x_seq.append(x_len - 2)
 
             # Convert input length list to numpy array
             input_length = np.array(len_x_seq)
@@ -169,13 +174,13 @@ class DataGenerator(Sequence):
         """
 
         if self.type == 'mfcc':
-            mfcc_frames = mfcc(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
-                               n_mfcc=self.mfcc_features, n_mels=self.n_mels)
+            mfcc_frames = librosa.feature.mfcc(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
+                                               n_mfcc=self.mfcc_features, n_mels=self.n_mels)
             return mfcc_frames.shape[1]
 
         elif self.type == 'spectrogram':
-            spectrogram = melspectrogram(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
-                                         n_mels=self.n_mels)
+            spectrogram = librosa.feature.melspectrogram(frames, sr, n_fft=self.frame_length, hop_length=self.hop_length,
+                                                         n_mels=self.n_mels)
             return spectrogram.shape[1]
 
         else:

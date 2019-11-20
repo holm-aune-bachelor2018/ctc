@@ -43,76 +43,15 @@ def _download_and_preprocess_data(data_dir):
 
     def filename_of(x): return os.path.split(x)[1]
 
-    TRAIN_CLEAN_100_URL = "http://www.openslr.org/resources/12/train-clean-100.tar.gz"
-    TRAIN_CLEAN_360_URL = "http://www.openslr.org/resources/12/train-clean-360.tar.gz"
-    TRAIN_OTHER_500_URL = "http://www.openslr.org/resources/12/train-other-500.tar.gz"
-
-    DEV_CLEAN_URL = "http://www.openslr.org/resources/12/dev-clean.tar.gz"
-    DEV_OTHER_URL = "http://www.openslr.org/resources/12/dev-other.tar.gz"
-
-    TEST_CLEAN_URL = "http://www.openslr.org/resources/12/test-clean.tar.gz"
-    TEST_OTHER_URL = "http://www.openslr.org/resources/12/test-other.tar.gz"
-
+    TRAIN_CLEAN_100_URL = "http://www.openslr.org/resources/12/dev-other.tar.gz"
     train_clean_100 = base.maybe_download(filename_of(TRAIN_CLEAN_100_URL), data_dir, TRAIN_CLEAN_100_URL)
-    train_clean_360 = base.maybe_download(filename_of(TRAIN_CLEAN_360_URL), data_dir, TRAIN_CLEAN_360_URL)
-    train_other_500 = base.maybe_download(filename_of(TRAIN_OTHER_500_URL), data_dir, TRAIN_OTHER_500_URL)
-
-    dev_clean = base.maybe_download(filename_of(DEV_CLEAN_URL), data_dir, DEV_CLEAN_URL)
-    dev_other = base.maybe_download(filename_of(DEV_OTHER_URL), data_dir, DEV_OTHER_URL)
-
-    test_clean = base.maybe_download(filename_of(TEST_CLEAN_URL), data_dir, TEST_CLEAN_URL)
-    test_other = base.maybe_download(filename_of(TEST_OTHER_URL), data_dir, TEST_OTHER_URL)
-
-    # Conditionally extract LibriSpeech data
-    # We extract each archive into data_dir, but test for existence in
-    # data_dir/LibriSpeech because the archives share that root.
     print("Extracting librivox data if not already extracted...")
     LIBRIVOX_DIR = "LibriSpeech"
     work_dir = os.path.join(data_dir, LIBRIVOX_DIR)
-
-    _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "train-clean-100"), train_clean_100)
-    _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "train-clean-360"), train_clean_360)
-    _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "train-other-500"), train_other_500)
-
-    _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "dev-clean"), dev_clean)
-    _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "dev-other"), dev_other)
-    _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "test-clean"), test_clean)
-
-    _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "test-other"), test_other)
-
-    # Convert FLAC data to wav, from:
-    #  data_dir/LibriSpeech/split/1/2/1-2-3.flac
-    # to:
-    #  data_dir/LibriSpeech/split-wav/1-2-3.wav
-    #
-    # And split LibriSpeech transcriptions, from:
-    #  data_dir/LibriSpeech/split/1/2/1-2.trans.txt
-    # to:
-    #  data_dir/LibriSpeech/split-wav/1-2-0.txt
-    #  data_dir/LibriSpeech/split-wav/1-2-1.txt
-    #  data_dir/LibriSpeech/split-wav/1-2-2.txt
-    #  ...
+    _maybe_extract(data_dir, os.path.join(LIBRIVOX_DIR, "dev-other"), train_clean_100)
     print("Moving files and splitting transcriptions...")
-    train_100 = _convert_audio_and_split_sentences(work_dir, "train-clean-100", "train-clean-100-new")
-    train_360 = _convert_audio_and_split_sentences(work_dir, "train-clean-360", "train-clean-360-new")
-
-    train_500 = _convert_audio_and_split_sentences(work_dir, "train-other-500", "train-other-500-new")
-
-    dev_clean = _convert_audio_and_split_sentences(work_dir, "dev-clean", "dev-clean-new")
-    dev_other = _convert_audio_and_split_sentences(work_dir, "dev-other", "dev-other-new")
-    test_clean = _convert_audio_and_split_sentences(work_dir, "test-clean", "test-clean-new")
-    test_other = _convert_audio_and_split_sentences(work_dir, "test-other", "test-other-new")
-
-    # Write sets to disk as CSV files
-    train_100.to_csv(os.path.join(data_dir, "librivox-train-clean-100.csv"), index=False)
-    train_360.to_csv(os.path.join(data_dir, "librivox-train-clean-360.csv"), index=False)
-    train_500.to_csv(os.path.join(data_dir, "librivox-train-other-500.csv"), index=False)
-
-    dev_clean.to_csv(os.path.join(data_dir, "librivox-dev-clean.csv"), index=False)
-    dev_other.to_csv(os.path.join(data_dir, "librivox-dev-other.csv"), index=False)
-
-    test_clean.to_csv(os.path.join(data_dir, "librivox-test-clean.csv"), index=False)
-    test_other.to_csv(os.path.join(data_dir, "librivox-test-other.csv"), index=False)
+    train_100 = _convert_audio_and_split_sentences(work_dir, "dev-other", "dev-other-new")
+    train_100.to_csv(os.path.join(data_dir, "librivox-dev-other.csv"), index=False)
 
 
 def _maybe_extract(data_dir, extracted_data, archive):
