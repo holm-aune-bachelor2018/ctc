@@ -1,4 +1,5 @@
-from char_map import char_map, index_map
+from utils.char_map import char_map
+from utils.char_map import index_map
 
 # The following code is adapted from: github.com/baidu-research/ba-dls-deepspeech
 # Which is under the Apache License:
@@ -25,7 +26,7 @@ def int_to_text_sequence(seq):
     """ Use a index map and convert int to a text sequence """
     text_sequence = []
     for c in seq:
-        if c == 28: # ctc/pad char
+        if c == 28:  # ctc/pad char
             ch = ''
         else:
             ch = index_map[c]

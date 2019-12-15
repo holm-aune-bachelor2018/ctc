@@ -50,3 +50,10 @@ for line in char_map_str.strip().split('\n'):
 
 index_map[0] = ' '
 
+
+# def char_map(char)
+#   char_map = {}
+#    for line in char_map_str.strip().split('\n'):
+#         ch, index = line.split()
+#         char_map[ch] = int(index)
+#     return char

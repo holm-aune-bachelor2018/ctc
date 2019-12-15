@@ -1,17 +1,3 @@
-"""
-LICENSE
-
-This file is part of Speech recognition with CTC in Keras.
-The project is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
-License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-version.
-The project is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
-warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this project.
-If not, see http://www.gnu.org/licenses/.
-
-"""
-
 import argparse
 from datetime import datetime
 
@@ -33,9 +19,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 def main(args):
     # Paths to .csv files
-    path = "data_dir/librivox-dev-other.csv"
-    path_validation = "data_dir/sample_librivox-dev-clean-wav.csv"
-    path_test = "data_dir/sample_librivox-test-clean.csv"
+    path = "data_dir/librivox-train-clean-100.csv"
+    path_validation = "data_dir/librivox-dev-clean.csv"
+    path_test = "data_dir/librivox-test-clean.csv"
 
     # Create dataframes
     print("\nReading training data:")
@@ -191,34 +177,6 @@ def main(args):
             mcp_cb = ModelCheckpoint(
                 save_best, verbose=1, save_best_only=True, period=1)
             callbacks.append(mcp_cb)
-
-        # # Train with parallel model on 2 or more GPUs, must be even number
-        # if num_gpu > 1:
-        #     if num_gpu % 2 == 0:
-        #         # Compile parallel model for training on GPUs > 1
-        #         parallel_model = multi_gpu_model(model, gpus=num_gpu)
-        #         parallel_model.compile(loss=loss, optimizer=optimizer)
-
-        #         # Print(model summary)
-        #         model.summary()
-
-        #         # Creates a test function that takes sound input and outputs predictions
-        #         # Used to calculate WER while training the network
-        #         input_data = model.get_layer('the_input').input
-        #         y_pred = model.get_layer('ctc').input[0]
-        #         test_func = K.function([input_data], [y_pred])
-
-        #         # The loss callback function that calculates WER while training
-        #         loss_cb = LossCallback(
-        #             test_func=test_func, model=model, **loss_callback_params)
-        #         callbacks.append(loss_cb)
-
-        #         # Run training
-        #         parallel_model.fit_generator(
-        #             callbacks=callbacks, **model_train_params)
-
-        #     else:
-        #         raise ValueError('Number of GPUs must be an even number')
 
         # Train with CPU or single GPU
         elif num_gpu == 1 or num_gpu == 0:
