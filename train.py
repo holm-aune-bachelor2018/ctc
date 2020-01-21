@@ -110,34 +110,19 @@ def main(args):
           batch_size, " files", "\n - learning rate: ", learning_rate,
           "\n - hidden units: ", units, "\n - mfcc features: ", mfcc_features, "\n - dropout: ", dropout, "\n")
 
+    checkpoint_path = "checkpoint/cp-{epoch:04d}.ckpt"
+    checkpoint_dir = os.path.dirname(checkpoint_path)
+    latest = tf.train.latest_checkpoint(checkpoint_dir)
+
     try:
-        # Load previous model or create new. With device cpu ensures that the model is created/loaded on the cpu
-        if model_load:
-            with tf.device('/cpu:0'):
-                # When loading custom objects, Keras needs to know where to find them.
-                # The CTC lambda is a dummy function
-                custom_objects = {'clipped_relu': models.clipped_relu,
-                                  '<lambda>': lambda y_true, y_pred: y_pred}
-
-                # When loading a parallel model saved *while* running on multiple GPUs, use load_multi
-                if load_multi:
-                    model = models.load_model(
-                        model_load, custom_objects=custom_objects)
-                    model = model.layers[-2]
-                    print("Loaded existing model at: ", model_load)
-
-                # Load single GPU/CPU model or model saved *after* finished training
-                else:
-                    model = models.load_model(
-                        model_load, custom_objects=custom_objects)
-                    print("Loaded existing model at: ", model_load)
-
-        else:
-            with tf.device('/cpu:0'):
+        with tf.device('/cpu:0'):
                 # Create new model
-                model = models.model(model_type=model_type, units=units, input_dim=input_dim,
-                                     output_dim=output_dim, dropout=dropout, cudnn=cudnnlstm, n_layers=n_layers)
-                print("Creating new model: ", model_type)
+            model = models.model(model_type=model_type, units=units, input_dim=input_dim,
+                                 output_dim=output_dim, dropout=dropout, cudnn=cudnnlstm, n_layers=n_layers)
+            model.save_weights(checkpoint_path.format(epoch=0))
+            if latest != None:
+                model.load_weights(latest)
+            print("Creating new model: ", model_type)
 
         # Loss callback parameters
         loss_callback_params = {'validation_gen': validation_generator,
@@ -159,7 +144,7 @@ def main(args):
         # Reduces learning rate when val_loss stagnates.
         if reduce_lr:
             print("Reducing learning rate on plateau")
-            reduce_lr_cb = ReduceLROnPlateau(
+            reduce_lr_cb = tf.keras.callbacks.ReduceLROnPlateau(
                 factor=0.2, patience=5, verbose=0, epsilon=0.1, min_lr=0.0000001)
             callbacks = [reduce_lr_cb]
         else:
@@ -167,19 +152,23 @@ def main(args):
 
         # Stops the model early if the val_loss isn't improving
         if early_stopping:
-            es_cb = EarlyStopping(min_delta=0, patience=5,
-                                  verbose=0, mode='auto')
+            es_cb = tf.keras.callbacks.EarlyStopping(min_delta=0, patience=5,
+                                                     verbose=0, mode='auto')
             callbacks.append(es_cb)
 
         # Saves the model if val_loss is improved at "model_save" + "_best"
+        save_best = True
         if save_best:
-            save_best = model_save + str('_best')
-            mcp_cb = ModelCheckpoint(
-                save_best, verbose=1, save_best_only=True, period=1)
+            mcp_cb = tf.keras.callbacks.ModelCheckpoint(
+                filepath=checkpoint_path,
+                save_weights_only=True,
+                # save_best_only=True,
+                verbose=1,
+            )
             callbacks.append(mcp_cb)
 
         # Train with CPU or single GPU
-        elif num_gpu == 1 or num_gpu == 0:
+        if num_gpu == 1 or num_gpu == 0:
             # Compile model for training on GPUs < 2
             model.compile(loss=loss, optimizer=optimizer)
 
@@ -203,16 +192,16 @@ def main(args):
         else:
             raise ValueError('Not a valid number of GPUs: ', num_gpu)
 
-        if args.model_save:
-            model.save(model_save)
-            print("Model saved: ", model_save)
+        # if args.model_save:
+        #     model.save(model_save)
+        #     print("Model saved: ", model_save)
 
     except (Exception, ArithmeticError) as e:
         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
         message = template.format(type(e).__name__, e.args)
         print(message)
 
-    finally:
+    # finally:
         # Clear memory
         K.clear_session()
     print("Ending time: ", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
