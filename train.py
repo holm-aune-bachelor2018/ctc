@@ -1,3 +1,5 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import argparse
 from datetime import datetime
 
@@ -15,6 +17,15 @@ from data import combine_all_wavs_and_trans_from_csvs
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+
+try:
+    import tensorflow.compat.v1 as tf
+except Exception:
+    pass
+
+# tf.enable_v2_behavior()
+print(tf.__version__)
 
 
 def main(args):
@@ -119,8 +130,9 @@ def main(args):
                 # Create new model
             model = models.model(model_type=model_type, units=units, input_dim=input_dim,
                                  output_dim=output_dim, dropout=dropout, cudnn=cudnnlstm, n_layers=n_layers)
-            model.save_weights(checkpoint_path.format(epoch=0))
+            # model.save_weights(checkpoint_path.format(epoch=0))
             if latest != None:
+                print("Loaded weights from", latest)
                 model.load_weights(latest)
             print("Creating new model: ", model_type)
 
@@ -129,8 +141,7 @@ def main(args):
                                 'test_gen': test_generator,
                                 'checkpoint': checkpoint,
                                 'path_to_save': model_save,
-                                'log_file_path': log_file
-                                }
+                                'log_file_path': log_file}
 
         # Model training parameters
         model_train_params = {'generator': training_generator,

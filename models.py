@@ -25,16 +25,20 @@ def model(model_type='brnn', units=512, input_dim=26, output_dim=29, dropout=0.2
         network_model = brnn(units, input_dim, output_dim, dropout)
 
     elif model_type == 'deep_rnn':
-        network_model = deep_rnn(units, input_dim, output_dim, dropout, n_layers=n_layers)
+        network_model = deep_rnn(
+            units, input_dim, output_dim, dropout, n_layers=n_layers)
 
     elif model_type == 'blstm':
-        network_model = blstm(units, input_dim, output_dim, dropout, cudnn=cudnn, n_layers=n_layers)
+        network_model = blstm(units, input_dim, output_dim,
+                              dropout, cudnn=cudnn, n_layers=n_layers)
 
     elif model_type == 'deep_lstm':
-        network_model = deep_lstm(units, input_dim, output_dim, dropout, cudnn=cudnn, n_layers=n_layers)
+        network_model = deep_lstm(
+            units, input_dim, output_dim, dropout, cudnn=cudnn, n_layers=n_layers)
 
     elif model_type == 'cnn_blstm':
-        network_model = cnn_blstm(units, input_dim, output_dim, dropout, cudnn=cudnn, n_layers=n_layers)
+        network_model = cnn_blstm(
+            units, input_dim, output_dim, dropout, cudnn=cudnn, n_layers=n_layers)
 
     else:
         raise ValueError("Not a valid model: ", model_type)
@@ -73,7 +77,7 @@ def brnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, n_lay
 
     # ---- Network model ----
     # x_input layer, dim: (batch_size * x_seq_size * features)
-    input_data = Input(name='the_input',shape=(None, input_dim), dtype=dtype)
+    input_data = Input(name='the_input', shape=(None, input_dim), dtype=dtype)
 
     # Masking layer
     x = Masking(mask_value=0., name='masking')(input_data)
@@ -102,15 +106,19 @@ def brnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, n_lay
 
     # ---- CTC ----
     # y_input layers (transcription data) for CTC loss
-    labels = Input(name='the_labels', shape=[None], dtype=dtype)        # transcription data (batch_size * y_seq_size)
-    input_length = Input(name='input_length', shape=[1], dtype=dtype)   # unpadded len of all x_sequences in batch
-    label_length = Input(name='label_length', shape=[1], dtype=dtype)   # unpadded len of all y_sequences in batch
+    # transcription data (batch_size * y_seq_size)
+    labels = Input(name='the_labels', shape=[None], dtype=dtype)
+    # unpadded len of all x_sequences in batch
+    input_length = Input(name='input_length', shape=[1], dtype=dtype)
+    # unpadded len of all y_sequences in batch
+    label_length = Input(name='label_length', shape=[1], dtype=dtype)
 
     # Lambda layer with ctc_loss function due to Keras not supporting CTC layers
     loss_out = Lambda(function=ctc_lambda_func, name='ctc', output_shape=(1,))(
-                      [y_pred, labels, input_length, label_length])
+        [y_pred, labels, input_length, label_length])
 
-    network_model = Model(inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
+    network_model = Model(
+        inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
 
     return network_model
 
@@ -146,7 +154,7 @@ def deep_rnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, n
 
     # ---- Network model ----
     # x_input layer, dim: (batch_size * x_seq_size * mfcc_features)
-    input_data = Input(name='the_input',shape=(None, input_dim), dtype=dtype)
+    input_data = Input(name='the_input', shape=(None, input_dim), dtype=dtype)
 
     # Masking layer
     x = Masking(mask_value=0., name='masking')(input_data)
@@ -161,7 +169,7 @@ def deep_rnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, n
     # Deep RNN network with a default of 3 layers
     for i in range(0, n_layers):
         x = SimpleRNN(units, activation='relu', kernel_initializer=kernel_init_rnn, bias_initializer=bias_init_rnn,
-                      dropout=dropout, return_sequences=True, name=('deep_rnn_'+ str(i+1)))(x)
+                      dropout=dropout, return_sequences=True, name=('deep_rnn_' + str(i+1)))(x)
 
     # 1 fully connected layer DNN ReLu with default 20% dropout
     x = TimeDistributed(Dense(units=units, kernel_initializer=kernel_init_dense, bias_initializer=bias_init_dense,
@@ -174,15 +182,19 @@ def deep_rnn(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, n
 
     # ---- CTC ----
     # y_input layers (transcription data) for CTC loss
-    labels = Input(name='the_labels', shape=[None], dtype=dtype)        # transcription data (batch_size * y_seq_size)
-    input_length = Input(name='input_length', shape=[1], dtype=dtype)   # unpadded len of all x_sequences in batch
-    label_length = Input(name='label_length', shape=[1], dtype=dtype)   # unpadded len of all y_sequences in batch
+    # transcription data (batch_size * y_seq_size)
+    labels = Input(name='the_labels', shape=[None], dtype=dtype)
+    # unpadded len of all x_sequences in batch
+    input_length = Input(name='input_length', shape=[1], dtype=dtype)
+    # unpadded len of all y_sequences in batch
+    label_length = Input(name='label_length', shape=[1], dtype=dtype)
 
     # Lambda layer with ctc_loss function due to Keras not supporting CTC layers
     loss_out = Lambda(function=ctc_lambda_func, name='ctc', output_shape=(1,))(
-                      [y_pred, labels, input_length, label_length])
+        [y_pred, labels, input_length, label_length])
 
-    network_model = Model(inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
+    network_model = Model(
+        inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
 
     return network_model
 
@@ -259,15 +271,19 @@ def blstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, cudn
 
     # ---- CTC ----
     # y_input layers (transcription data) for CTC loss
-    labels = Input(name='the_labels', shape=[None], dtype=dtype)       # transcription data (batch_size * y_seq_size)
-    input_length = Input(name='input_length', shape=[1], dtype=dtype)  # unpadded len of all x_sequences in batch
-    label_length = Input(name='label_length', shape=[1], dtype=dtype)  # unpadded len of all y_sequences in batch
+    # transcription data (batch_size * y_seq_size)
+    labels = Input(name='the_labels', shape=[None], dtype=dtype)
+    # unpadded len of all x_sequences in batch
+    input_length = Input(name='input_length', shape=[1], dtype=dtype)
+    # unpadded len of all y_sequences in batch
+    label_length = Input(name='label_length', shape=[1], dtype=dtype)
 
     # Lambda layer with ctc_loss function due to Keras not supporting CTC layers
     loss_out = Lambda(function=ctc_lambda_func, name='ctc', output_shape=(1,))(
-                      [y_pred, labels, input_length, label_length])
+        [y_pred, labels, input_length, label_length])
 
-    network_model = Model(inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
+    network_model = Model(
+        inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
 
     return network_model
 
@@ -338,15 +354,19 @@ def deep_lstm(units, input_dim=26, output_dim=29, dropout=0.2, numb_of_dense=3, 
 
     # ---- CTC ----
     # y_input layers (transcription data) for CTC loss
-    labels = Input(name='the_labels', shape=[None], dtype=dtype)       # transcription data (batch_size * y_seq_size)
-    input_length = Input(name='input_length', shape=[1], dtype=dtype)  # unpadded len of all x_sequences in batch
-    label_length = Input(name='label_length', shape=[1], dtype=dtype)  # unpadded len of all y_sequences in batch
+    # transcription data (batch_size * y_seq_size)
+    labels = Input(name='the_labels', shape=[None], dtype=dtype)
+    # unpadded len of all x_sequences in batch
+    input_length = Input(name='input_length', shape=[1], dtype=dtype)
+    # unpadded len of all y_sequences in batch
+    label_length = Input(name='label_length', shape=[1], dtype=dtype)
 
     # Lambda layer with ctc_loss function due to Keras not supporting CTC layers
     loss_out = Lambda(function=ctc_lambda_func, name='ctc', output_shape=(1,))(
-                      [y_pred, labels, input_length, label_length])
+        [y_pred, labels, input_length, label_length])
 
-    network_model = Model(inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
+    network_model = Model(
+        inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
 
     return network_model
 
@@ -428,15 +448,19 @@ def cnn_blstm(units, input_dim=26, output_dim=29, dropout=0.2, seq_padding=2176,
 
     # ---- CTC ----
     # y_input layers (transcription data) for CTC loss
-    labels = Input(name='the_labels', shape=[None], dtype=dtype)       # transcription data (batch_size * y_seq_size)
-    input_length = Input(name='input_length', shape=[1], dtype=dtype)  # unpadded len of all x_sequences in batch
-    label_length = Input(name='label_length', shape=[1], dtype=dtype)  # unpadded len of all y_sequences in batch
+    # transcription data (batch_size * y_seq_size)
+    labels = Input(name='the_labels', shape=[None], dtype=dtype)
+    # unpadded len of all x_sequences in batch
+    input_length = Input(name='input_length', shape=[1], dtype=dtype)
+    # unpadded len of all y_sequences in batch
+    label_length = Input(name='label_length', shape=[1], dtype=dtype)
 
     # Lambda layer with ctc_loss function due to Keras not supporting CTC layers
     loss_out = Lambda(function=ctc_lambda_func, name='ctc', output_shape=(1,))(
-                      [y_pred, labels, input_length, label_length])
+        [y_pred, labels, input_length, label_length])
 
-    network_model = Model(inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
+    network_model = Model(
+        inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
 
     return network_model
 

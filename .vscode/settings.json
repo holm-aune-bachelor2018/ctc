@@ -1,5 +1,5 @@
 {
-  "python.pythonPath": "/usr/local/bin/python",
+  "python.pythonPath": "/Users/gabriel.t.nishimura/miniconda3/envs/usp/bin/python",
   "python.linting.enabled": true,
   "python.linting.pylintEnabled": true
 }
