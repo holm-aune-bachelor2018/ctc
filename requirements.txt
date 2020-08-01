@@ -4,5 +4,5 @@ matplotlib==2.1.1
 tensorflow==1.14.0
 Keras==2.1.5
 h5py==2.7.1
-numpy==1.13.3
-librosa==0.6.0
+numpy==1.14.5
+librosa==0.7.2

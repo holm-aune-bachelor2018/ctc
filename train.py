@@ -30,17 +30,16 @@ print(tf.__version__)
 
 def main(args):
     # Paths to .csv files
-    path = "data_dir/librivox-train-clean-100.csv"
-    path_validation = "data_dir/librivox-dev-clean.csv"
-    path_test = "data_dir/librivox-test-clean.csv"
 
     # Create dataframes
     print("\nReading training data:")
-    _, input_dataframe = combine_all_wavs_and_trans_from_csvs(path)
+    _, input_dataframe = combine_all_wavs_and_trans_from_csvs(
+        args.trainDataset)
     print("\nReading validation data: ")
-    _, validation_df = combine_all_wavs_and_trans_from_csvs(path_validation)
+    _, validation_df = combine_all_wavs_and_trans_from_csvs(
+        args.validationDataset)
     print("\nReading test data: ")
-    _, test_df = combine_all_wavs_and_trans_from_csvs(path_test)
+    _, test_df = combine_all_wavs_and_trans_from_csvs(args.testDataset)
 
     # Training params:
     batch_size = args.batch_size
@@ -127,7 +126,7 @@ def main(args):
 
     try:
         with tf.device('/cpu:0'):
-                # Create new model
+            # Create new model
             model = models.model(model_type=model_type, units=units, input_dim=input_dim,
                                  output_dim=output_dim, dropout=dropout, cudnn=cudnnlstm, n_layers=n_layers)
             # model.save_weights(checkpoint_path.format(epoch=0))
@@ -146,7 +145,7 @@ def main(args):
         # Model training parameters
         model_train_params = {'generator': training_generator,
                               'epochs': epochs,
-                              'verbose': 2,
+                              'verbose': 0,
                               'validation_data': validation_generator,
                               'workers': 1,
                               'shuffle': shuffle}
@@ -168,7 +167,6 @@ def main(args):
             callbacks.append(es_cb)
 
         # Saves the model if val_loss is improved at "model_save" + "_best"
-        save_best = True
         if save_best:
             mcp_cb = tf.keras.callbacks.ModelCheckpoint(
                 filepath=checkpoint_path,
@@ -220,7 +218,12 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-
+    parser.add_argument('-tr', '--trainDataset', metavar='trainDataset', dest='trainDataset',
+                        help='Train dataset csv path', default='data/local/librivox-train-clean-1-wav.csv')
+    parser.add_argument('-v', '--validationDataset', metavar='validationDataset', dest='validationDataset',
+                        help='Validation dataset csv path', default='data/local/librivox-dev-clean-wav.csv')
+    parser.add_argument('-te', '--testDataset', metavar='testDataset', dest='testDataset',
+                        help='Test dataset csv path', default='data/local/librivox-test-clean-wav.csv')
     # Training params:
     parser.add_argument('--batch_size', type=int, default=16,
                         help='Number of files in one batch.')
