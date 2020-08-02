@@ -24,7 +24,7 @@ def main(args):
     except Exception as e:
         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
         message = template.format(type(e).__name__, e.args)
-        print message
+        print(message)
 
 
 def plot_graph_from_csv(path, save, title, x_axis=100, y_axis=250):
@@ -73,10 +73,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--path', type=str, help='Path of file to load')
-    parser.add_argument('--save', type=str, default="model_graph", help='Path to save graph as image')
-    parser.add_argument('--title', type=str, default="Model graph",help='Plot title')
+    parser.add_argument('--save', type=str, default="model_graph",
+                        help='Path to save graph as image')
+    parser.add_argument('--title', type=str,
+                        default="Model graph", help='Plot title')
 
     args = parser.parse_args()
 
     main(args)
-

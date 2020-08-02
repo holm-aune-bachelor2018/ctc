@@ -2,17 +2,14 @@ Speech recognition with RNN and CTC
 ======
 [![Build Status](https://travis-ci.org/holm-aune-bachelor2018/ctc.svg?branch=master)](https://travis-ci.org/holm-aune-bachelor2018/ctc)
 
-
 Table of Contents
 ------
- * [Project description](#project)
+ * [Project description](#project-description)
  * [Installation](#installation)
  * [Running](#running)
  * [Usage](#usage)
- * [Architecure overview](#overview)
+ * [Architecure overview](#architecture-overview)
  * [Licence](#licence)
-
-<a name="project"/>
 
 ## Project description
 This repository is a part of TDAT3001 Bachelor Thesis in Computer Engineering at NTNU, project number 61:
@@ -22,8 +19,6 @@ This repository is a part of TDAT3001 Bachelor Thesis in Computer Engineering at
 The purpose of this project was to test different neural networks' performance on speech recognition, using recurrent neural networks (RNN) and connectionist temporal classification (CTC).
 
 During this project we have tested various nettwork models for speech recognition. The resulting logs and saved models can be found at [train-logs].
-
-<a name="installation"/>
 
 ## Installation
 This project uses Python 2.7, TensorFlow version 1.6.1 and Keras version 2.1.5.
@@ -53,10 +48,6 @@ Fork and download or clone the project, and enter the downloaded directory:
 As per Keras version 2.1.5, there is a bug when trying to save the model during training when using the multi_gpu_model().  
 Please refer to this [Multi-GPU Model Keras guide] regarding how to save and load a multi-GPU model, including a work-around for the bug.
 
-<br>
-
-<a name="running"/>
-
 ## Running
 
 **Download LibriSpeech** 
@@ -68,7 +59,6 @@ This will download 55 GB of speech data into the data_dir directory
 (tensorflow) $ import_librispeech.py data_dir 
 
 ```
-<br> 
 
 **Running training** <br>
 If using TensorFlow with CPU or 1 GPU, to run the training with default parameters, simply do:
@@ -87,14 +77,13 @@ Save the model every 10 epochs at "models/brnn_25hours.h5" <br>
 ```
 (tensorflow) $ train.py --units=512 --batch_size=64 --epoch_len=256 --epochs=50 --model_type='brnn' --model_save='models/brnn_25hours.h5' --log_file='logs/brnn_25hours'  
 ```
-<br> 
 
 **Example loading** <br>
+
 To continue training the same model for another 50 epochs, use the model_load argument:
 ```
 (tensorflow) $ train.py --model_load='models/brnn_25hours.h5' --units=512 --batch_size=64 --epoch_len=256 --epochs=50 --model_save='models/continued_brnn_25hours.h5' --log_file='logs/continued_brnn_25hours'  
 ```
-<br> 
 
 **Parallel GPU training** <br>
 If running on multiple GPUs, enable multiGPU training:
@@ -110,10 +99,6 @@ With the GPU TensorFlow back you may wish to try the CuDNN optimised LSTM
 ```
 (tensorflow) $ train.py --model_type=blstm --cudnn --units=512 --batch_size=64 --epoch_len=256 --epochs=50 --model_save='models/blstm_25hours.h5' --log_file='logs/blstm_25hours'
 ```
-
-<br>
-
-<a name="usage"/>
 
 ## Usage
 ```train.py``` is used to train models.
@@ -168,9 +153,6 @@ Parameters for ```train.py```:
 --early_stopping: Include to stop the training early if val_loss stops improving.
 ```
 
-<a name="overview"/>
-<br>
-
 ## Architecture overview
 ![alt text](https://github.com/holm-aune-bachelor2018/ctc/blob/master/images/architecture_overview.png)
 
@@ -190,9 +172,6 @@ Shows the overall structure of the project.
    
    
 Additionally, predict.py loads a trained model and creates prediction samples. It can also calculate WER.
-
-<a name="licence"/>
-<br>
 
 ## Licence
 This file is part of Speech recognition with CTC in Keras.

@@ -1,0 +1,6 @@
+*.pyc
+data_dir
+__pycache__
+*.tar.gz
+.mypy_cache/
+checkpoint/
